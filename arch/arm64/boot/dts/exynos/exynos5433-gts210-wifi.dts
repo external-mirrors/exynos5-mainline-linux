@@ -1,0 +1,305 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Samsung Exynos5433 gts10wifi board device tree source
+ *
+ * Copyright (c) 2016 Samsung Electronics Co., Ltd.
+ *
+ * Device tree source file for Samsung's gts210-wifi board which is based on
+ * Samsung Exynos5433 SoC.
+ */
+
+/dts-v1/;
+#include "exynos5433.dtsi"
+#include <dt-bindings/clock/samsung,s2mps11.h>
+#include <dt-bindings/gpio/gpio.h>
+
+/ {
+	model = "Samsung Gts210-Wifi based on exynos5433";
+	compatible = "samsung,gts2", "samsung,gts210-wifi", \
+		     "samsung,exynos5433";
+	chassis-type = "tablet";
+
+	aliases {
+		serial1 = &serial_1;
+	};
+
+	chosen {
+		stdout-path = &serial_1;
+	};
+
+	memory@20000000 {
+		device_type = "memory";
+		reg = <0x0 0x20000000 0x0 0xc0000000>;
+	};
+};
+
+&hsi2c_0 {
+	status = "okay";
+	clock-frequency = <2500000>;
+
+	pmic@66 {
+		compatible = "samsung,s2mps13-pmic";
+		interrupt-parent = <&gpa0>;
+		interrupts = <7 IRQ_TYPE_LEVEL_LOW>;
+		reg = <0x66>;
+		samsung,s2mps11-wrstbi-ground;
+		wakeup-source;
+
+		s2mps13_osc: clocks {
+			compatible = "samsung,s2mps13-clk";
+			#clock-cells = <1>;
+			clock-output-names = "s2mps13_ap", "s2mps13_cp",
+				"s2mps13_bt";
+		};
+
+		regulators {
+			ldo2_reg: LDO2 {
+				regulator-name = "VDDQ_MMC2_2.8V_AP";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-always-on;
+				regulator-state-mem {
+					regulator-off-in-suspend;
+				};
+			};
+
+			ldo3_reg: LDO3 {
+				regulator-name = "VDD1_E_1.8V_AP";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-always-on;
+			};
+
+			ldo11_reg: LDO11 {
+				regulator-name = "VDD_INT_M_1.0V_AP";
+				regulator-min-microvolt = <600000>;
+				regulator-max-microvolt = <1500000>;
+				regulator-always-on;
+				regulator-state-mem {
+					regulator-off-in-suspend;
+				};
+			};
+
+			ldo17_reg: LDO17 {
+				regulator-name = "V_TFLASH_2.8V_AP";
+				regulator-min-microvolt = <2800000>;
+				regulator-max-microvolt = <2800000>;
+			};
+
+			ldo18_reg: LDO18 {
+				regulator-name = "V_CODEC_1.8V_AP";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+
+			ldo19_reg: LDO19 {
+				regulator-name = "VDDA_1.8V_COMP";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-always-on;
+			};
+
+			ldo20_reg: LDO20 {
+				regulator-name = "VCC_2.8V_AP";
+				regulator-min-microvolt = <2800000>;
+				regulator-max-microvolt = <2800000>;
+				regulator-always-on;
+			};
+
+			ldo21_reg: LDO21 {
+				regulator-name = "VT_CAM_1.8V";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+
+			ldo22_reg: LDO22 {
+				regulator-name = "CAM_IO_1.8V_AP";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+
+			ldo23_reg: LDO23 {
+				regulator-name = "CAM_SEN_CORE_1.05V_AP";
+				regulator-min-microvolt = <1300000>;
+				regulator-max-microvolt = <1300000>;
+			};
+
+			ldo26_reg: LDO26 {
+				regulator-name = "CAM_AF_2.8V_AP";
+				regulator-min-microvolt = <2800000>;
+				regulator-max-microvolt = <2800000>;
+			};
+
+			ldo27_reg: LDO27 {
+				regulator-name = "VCC_3.0V_LCD_AP";
+				regulator-min-microvolt = <3000000>;
+				regulator-max-microvolt = <3000000>;
+			};
+
+			ldo29_reg: LDO29 {
+				regulator-name = "VT_CAM_2.8V";
+				regulator-min-microvolt = <2800000>;
+				regulator-max-microvolt = <2800000>;
+			};
+
+			ldo30_reg: LDO30 {
+				regulator-name = "TSP_AVDD_3.3V_AP";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+			};
+
+			ldo31_reg: LDO31 {
+				regulator-name = "TSP_1.85V_IO";
+				regulator-min-microvolt = <1850000>;
+				regulator-max-microvolt = <1850000>;
+			};
+
+			ldo32_reg: LDO32 {
+				regulator-name = "VTOUCH_1.8V_AP";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+
+			ldo33_reg: LDO33 {
+				regulator-name = "VTOUCH_LED_3.3V";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-ramp-delay = <12500>;
+			};
+
+			ldo34_reg: LDO34 {
+				regulator-name = "VCC_1.8V_MHL_AP";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+
+			ldo35_reg: LDO35 {
+				regulator-name = "OIS_VM_2.8V";
+				regulator-min-microvolt = <3000000>;
+				regulator-max-microvolt = <3000000>;
+			};
+
+			ldo36_reg: LDO36 {
+				regulator-name = "VSIL_1.2V";
+				regulator-min-microvolt = <1200000>;
+				regulator-max-microvolt = <1200000>;
+			};
+
+			ldo38_reg: LDO38 {
+				regulator-name = "VCC_3.3V_MHL";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+			};
+
+			ldo40_reg: LDO40 {
+				regulator-name = "V_IRLED_3.3V";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3350000>;
+			};
+
+			buck1_reg: BUCK1 {
+				regulator-name = "VDD_MIF_0.9V_AP";
+				regulator-min-microvolt = <600000>;
+				regulator-max-microvolt = <1500000>;
+				regulator-always-on;
+				regulator-state-mem {
+					regulator-off-in-suspend;
+				};
+			};
+
+			buck2_reg: BUCK2 {
+				regulator-name = "VDD_EGL_1.0V_AP";
+				regulator-min-microvolt = <600000>;
+				regulator-max-microvolt = <1500000>;
+				regulator-always-on;
+				regulator-state-mem {
+					regulator-off-in-suspend;
+				};
+			};
+
+			buck3_reg: BUCK3 {
+				regulator-name = "VDD_KFC_1.0V_AP";
+				regulator-min-microvolt = <600000>;
+				regulator-max-microvolt = <1500000>;
+				regulator-always-on;
+				regulator-state-mem {
+					regulator-off-in-suspend;
+				};
+			};
+
+			buck4_reg: BUCK4 {
+				regulator-name = "VDD_INT_0.95V_AP";
+				regulator-min-microvolt = <600000>;
+				regulator-max-microvolt = <1500000>;
+				regulator-always-on;
+				regulator-state-mem {
+					regulator-off-in-suspend;
+				};
+			};
+
+			buck5_reg: BUCK5 {
+				regulator-name = "VDD_DISP_CAM0_0.9V_AP";
+				regulator-min-microvolt = <600000>;
+				regulator-max-microvolt = <1500000>;
+				regulator-always-on;
+				regulator-state-mem {
+					regulator-off-in-suspend;
+				};
+			};
+
+			buck6_reg: BUCK6 {
+				regulator-name = "VDD_G3D_0.9V_AP";
+				regulator-min-microvolt = <600000>;
+				regulator-max-microvolt = <1500000>;
+				regulator-always-on;
+				regulator-state-mem {
+					regulator-off-in-suspend;
+				};
+			};
+		};
+	};
+};
+
+&mshc_0 {
+	status = "okay";
+	mmc-hs200-1_8v;
+	mmc-hs400-1_8v;
+	cap-mmc-highspeed;
+	non-removable;
+	card-detect-delay = <200>;
+	samsung,dw-mshc-ciu-div = <3>;
+	samsung,dw-mshc-sdr-timing = <0 4>;
+	samsung,dw-mshc-ddr-timing = <0 2>;
+	samsung,dw-mshc-hs400-timing = <0 3>;
+	samsung,read-strobe-delay = <90>;
+	fifo-depth = <0x80>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&sd0_clk &sd0_cmd &sd0_qrdy &sd0_bus1 &sd0_bus4
+			&sd0_bus8 &sd0_rdqs>;
+	bus-width = <8>;
+	assigned-clocks = <&cmu_top CLK_SCLK_MMC0_FSYS>;
+	assigned-clock-rates = <800000000>;
+};
+
+&mshc_2 {
+	status = "okay";
+	cap-sd-highspeed;
+	disable-wp;
+	cd-gpios = <&gpa2 4 GPIO_ACTIVE_LOW>;
+	card-detect-delay = <200>;
+	samsung,dw-mshc-ciu-div = <3>;
+	samsung,dw-mshc-sdr-timing = <0 4>;
+	samsung,dw-mshc-ddr-timing = <0 2>;
+	fifo-depth = <0x80>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&sd2_clk &sd2_cmd &sd2_bus1 &sd2_bus4>;
+	bus-width = <4>;
+};
+
+&serial_1 {
+	status = "okay";
+};
+
+&xxti {
+	clock-frequency = <24000000>;
+};

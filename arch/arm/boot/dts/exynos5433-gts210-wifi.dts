@@ -1,0 +1,2 @@
+// SPDX-License-Identifier: GPL-2.0-only
+#include "arm64/exynos/exynos5433-gts210-wifi.dts"
