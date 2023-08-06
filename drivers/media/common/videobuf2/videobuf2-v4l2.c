@@ -682,7 +682,7 @@ static void vb2_set_flags_and_caps(struct vb2_queue *q, u32 memory,
 		*flags = 0;
 	} else {
 		/* Clear all unknown flags. */
-		*flags &= V4L2_MEMORY_FLAG_NON_COHERENT;
+		*flags |= V4L2_MEMORY_FLAG_NON_COHERENT;
 	}
 
 	*caps |= V4L2_BUF_CAP_SUPPORTS_ORPHANED_BUFS;
