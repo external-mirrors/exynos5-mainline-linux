@@ -451,6 +451,13 @@
 };
 
 &pinctrl_0 {
+	flash_spi_cs: flash-spi-cs-pins {
+		samsung,pins = "gpa2-5";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV3>;
+	};
+
 	s5m8767_dvs: s5m8767-dvs-pins {
 		samsung,pins = "gpd1-0", "gpd1-1", "gpd1-2";
 		samsung,pin-function = <EXYNOS_PIN_FUNC_INPUT>;
@@ -551,6 +558,21 @@
 	status = "okay";
 	samsung,spi-src-clk = <0>;
 	num-cs = <1>;
+	cs-gpios = <&gpa2 5 GPIO_ACTIVE_HIGH>;
+
+	flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+
+		spi-max-frequency = <10000000>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&flash_spi_cs>;
+
+		controller-data {
+			samsung,spi-feedback-delay = <2>;
+		};
+	};
 };
 
 &usbdrd {
