@@ -1542,6 +1542,34 @@ static const struct panel_desc samsung_lsn122dl01_c01 = {
 	},
 };
 
+static const struct drm_display_mode samsung_ltl101dl02_002_mode = {
+	.clock = 268627,
+	.hdisplay = 2560,
+	.hsync_start = 2560 + 48,
+	.hsync_end = 2560 + 48 + 32,
+	.htotal = 2560 + 48 + 32 + 80,
+	.vdisplay = 1600,
+	.vsync_start = 1600 + 3,
+	.vsync_end = 1600 + 3 + 6,
+	.vtotal = 1600 + 3 + 6 + 37,
+	.flags = DRM_MODE_FLAG_NVSYNC | DRM_MODE_FLAG_NHSYNC,
+};
+
+static const struct panel_desc samsung_ltl101dl02_002 = {
+	.modes = &samsung_ltl101dl02_002_mode,
+	.num_modes = 1,
+	.bpc = 6,
+	.size = {
+		.width = 218,
+		.height = 136,
+	},
+	.delay = {
+		.hpd_absent = 200,
+		.unprepare = 500,
+	},
+
+};
+
 static const struct drm_display_mode samsung_ltn140at29_301_mode = {
 	.clock = 76300,
 	.hdisplay = 1366,
@@ -1696,6 +1724,9 @@ static const struct of_device_id platform_of_match[] = {
 	}, {
 		.compatible = "samsung,lsn122dl01-c01",
 		.data = &samsung_lsn122dl01_c01,
+	}, {
+		.compatible = "samsung,ltl101dl02-002",
+		.data = &samsung_ltl101dl02_002,
 	}, {
 		.compatible = "samsung,ltn140at29-301",
 		.data = &samsung_ltn140at29_301,
