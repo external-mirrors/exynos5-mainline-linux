@@ -101,7 +101,7 @@
 #define PWR_CTRL2_CORE1_UP_RATIO		(1 << 0)
 
 /* NOTE: Must be equal to the last clock ID increased by one */
-#define CLKS_NR					(CLK_MOUT_VPLLSRC + 1)
+#define CLKS_NR					(CLK_MOUT_VPLL + 1)
 
 /* list of PLLs to be registered */
 enum exynos5250_plls {
@@ -282,7 +282,7 @@ static const struct samsung_mux_clock exynos5250_mux_clks[] __initconst = {
 
 	MUX(0, "mout_cpll", mout_cpll_p, SRC_TOP2, 8, 1),
 	MUX(0, "mout_epll", mout_epll_p, SRC_TOP2, 12, 1),
-	MUX(0, "mout_vpll", mout_vpll_p, SRC_TOP2, 16, 1),
+	MUX(CLK_MOUT_VPLL, "mout_vpll", mout_vpll_p, SRC_TOP2, 16, 1),
 	MUX(0, "mout_mpll_user", mout_mpll_user_p, SRC_TOP2, 20, 1),
 	MUX(0, "mout_bpll_user", mout_bpll_user_p, SRC_TOP2, 24, 1),
 	MUX(CLK_MOUT_GPLL, "mout_gpll", mout_gpll_p, SRC_TOP2, 28, 1),
@@ -303,7 +303,7 @@ static const struct samsung_mux_clock exynos5250_mux_clks[] __initconst = {
 	MUX(0, "mout_gscl_wa", mout_group1_p, SRC_GSCL, 24, 4),
 	MUX(0, "mout_gscl_wb", mout_group1_p, SRC_GSCL, 28, 4),
 
-	MUX(0, "mout_fimd1", mout_group1_p, SRC_DISP1_0, 0, 4),
+	MUX(CLK_MOUT_FIMD1, "mout_fimd1", mout_group1_p, SRC_DISP1_0, 0, 4),
 	MUX(0, "mout_mipi1", mout_group1_p, SRC_DISP1_0, 12, 4),
 	MUX(0, "mout_dp", mout_group1_p, SRC_DISP1_0, 16, 4),
 	MUX(CLK_MOUT_HDMI, "mout_hdmi", mout_hdmi_p, SRC_DISP1_0, 20, 1),
