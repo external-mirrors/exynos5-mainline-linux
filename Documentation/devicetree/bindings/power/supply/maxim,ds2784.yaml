@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: GPL-2.0
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/power/supply/maxim,ds2784.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: Maxim/Dallas DS2784 Stand-Alone Fuel Gauge IC
+
+maintainers:
+  - 
+
+description: |
+  The ds2784 is a w1 slave device and must hence have its sub-node in
+  DT under a w1 bus master node.
+
+allOf:
+  - $ref: power-supply.yaml#
+
+properties:
+  compatible:
+    const: maxim,ds2784
+
+required:
+  - compatible
+
+unevaluatedProperties: false
