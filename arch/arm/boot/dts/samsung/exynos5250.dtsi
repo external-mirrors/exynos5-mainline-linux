@@ -240,6 +240,17 @@
 			power-domains = <&pd_mau>;
 		};
 
+		hsotg: usb@12140000 {
+			compatible = "samsung,s3c6400-hsotg";
+			reg = <0x12140000 0x20000>;
+			interrupts = <GIC_SPI 74 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&clock CLK_USBOTG>;
+			clock-names = "otg";
+			phys = <&usb2_phy_gen 0>;
+			phy-names = "usb2-phy";
+			status = "disabled";
+		};
+
 		timer@101c0000 {
 			compatible = "samsung,exynos5250-mct",
 				     "samsung,exynos4210-mct";
