@@ -170,16 +170,6 @@ config BATTERY_DS2782
 	  Say Y here to enable support for the DS2782/DS2786 standalone battery
 	  gas-gauge.
 
-config BATTERY_DS2784
-	tristate "DS2784 battery driver"
-	depends on HAS_IOMEM
-	select W1
-	select W1_SLAVE_DS2784
-	help
-	  If you enable this you will have the DS2784 battery driver support.
-
-	  If you are unsure, say N.
-
 config BATTERY_LEGO_EV3
 	tristate "LEGO MINDSTORMS EV3 battery"
 	depends on OF && IIO && GPIOLIB && (ARCH_DAVINCI_DA850 || COMPILE_TEST)
