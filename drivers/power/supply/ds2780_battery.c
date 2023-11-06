@@ -755,7 +755,7 @@ static int ds2780_battery_probe(struct platform_device *pdev)
 
 	dev_info->dev			= &pdev->dev;
 	dev_info->w1_dev		= pdev->dev.parent;
-	dev_info->bat_desc.name		= dev_name(&pdev->dev);
+	dev_info->bat_desc.name		= kasprintf(GFP_KERNEL, "ds2780-battery.%d", pdev->dev.id);
 	dev_info->bat_desc.type		= POWER_SUPPLY_TYPE_BATTERY;
 	dev_info->bat_desc.properties	= ds2780_battery_props;
 	dev_info->bat_desc.num_properties = ARRAY_SIZE(ds2780_battery_props);
