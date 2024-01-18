@@ -1099,6 +1099,11 @@ static int smb347_get_property_locked(struct power_supply *psy,
 	struct smb347_charger *smb = power_supply_get_drvdata(psy);
 	int ret;
 
+	ret = smb347_update_ps_status(smb);
+	if (ret < 0)
+		return ret;
+	smb347_start_stop_charging(smb);
+
 	switch (prop) {
 	case POWER_SUPPLY_PROP_STATUS:
 		ret = smb347_get_charging_status(smb, psy);
