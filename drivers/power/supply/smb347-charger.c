@@ -352,10 +352,19 @@ static bool smb347_is_ps_online(struct smb347_charger *smb)
  * Function returns charging status. %0 means no charging is in progress,
  * %1 means pre-charging, %2 fast-charging and %3 taper-charging.
  */
-static int smb347_charging_status(struct smb347_charger *smb)
+static int smb347_charging_status(struct smb347_charger *smb,
+				  struct power_supply *psy)
 {
 	unsigned int val;
 	int ret;
+
+	if (psy->desc->type == POWER_SUPPLY_TYPE_USB) {
+		if (!smb->usb_online)
+			return -ENODATA;
+	} else {
+		if (!smb->mains_online)
+			return -ENODATA;
+	}
 
 	if (!smb347_is_ps_online(smb))
 		return 0;
@@ -987,14 +996,20 @@ static int smb347_irq_init(struct smb347_charger *smb,
  * Returns the constant charge current programmed
  * into the charger in uA.
  */
-static int get_const_charge_current(struct smb347_charger *smb)
+static int get_const_charge_current(struct smb347_charger *smb,
+				    struct power_supply *psy)
 {
 	unsigned int id = smb->id;
 	int ret, intval;
 	unsigned int v;
 
-	if (!smb347_is_ps_online(smb))
-		return -ENODATA;
+	if (psy->desc->type == POWER_SUPPLY_TYPE_USB) {
+		if (!smb->usb_online)
+			return -ENODATA;
+	} else {
+		if (!smb->mains_online)
+			return -ENODATA;
+	}
 
 	ret = regmap_read(smb->regmap, STAT_B, &v);
 	if (ret < 0)
@@ -1020,13 +1035,19 @@ static int get_const_charge_current(struct smb347_charger *smb)
  * Returns the constant charge voltage programmed
  * into the charger in uV.
  */
-static int get_const_charge_voltage(struct smb347_charger *smb)
+static int get_const_charge_voltage(struct smb347_charger *smb,
+				    struct power_supply *psy)
 {
 	int ret, intval;
 	unsigned int v;
 
-	if (!smb347_is_ps_online(smb))
-		return -ENODATA;
+	if (psy->desc->type == POWER_SUPPLY_TYPE_USB) {
+		if (!smb->usb_online)
+			return -ENODATA;
+	} else {
+		if (!smb->mains_online)
+			return -ENODATA;
+	}
 
 	ret = regmap_read(smb->regmap, STAT_A, &v);
 	if (ret < 0)
@@ -1113,19 +1134,15 @@ static int smb347_get_property_locked(struct power_supply *psy,
 		break;
 
 	case POWER_SUPPLY_PROP_CHARGE_TYPE:
-		if (psy->desc->type == POWER_SUPPLY_TYPE_USB) {
-			if (!smb->usb_online)
-				return -ENODATA;
-		} else {
-			if (!smb->mains_online)
-				return -ENODATA;
-		}
+		ret = smb347_charging_status(smb, psy);
+		if (ret < 0)
+			return ret;
 
 		/*
 		 * We handle trickle and pre-charging the same, and taper
 		 * and none the same.
 		 */
-		switch (smb347_charging_status(smb)) {
+		switch (ret) {
 		case 1:
 			val->intval = POWER_SUPPLY_CHARGE_TYPE_TRICKLE;
 			break;
@@ -1146,14 +1163,14 @@ static int smb347_get_property_locked(struct power_supply *psy,
 		break;
 
 	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
-		ret = get_const_charge_voltage(smb);
+		ret = get_const_charge_voltage(smb, psy);
 		if (ret < 0)
 			return ret;
 		val->intval = ret;
 		break;
 
 	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
-		ret = get_const_charge_current(smb);
+		ret = get_const_charge_current(smb, psy);
 		if (ret < 0)
 			return ret;
 		val->intval = ret;
