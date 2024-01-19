@@ -18,6 +18,7 @@
  */
 
 #include <linux/delay.h>
+#include <linux/gpio/consumer.h>
 #include <linux/i2c.h>
 #include <linux/iio/iio.h>
 #include <linux/iio/sysfs.h>
@@ -37,6 +38,7 @@ enum {
 struct bh1750_chip_info;
 struct bh1750_data {
 	struct i2c_client *client;
+	struct gpio_desc *reset_gpio;
 	struct mutex lock;
 	const struct bh1750_chip_info *chip_info;
 	u16 mtreg;
@@ -66,6 +68,18 @@ static const struct bh1750_chip_info bh1750_chip_info_tbl[] = {
 	[BH1721] = { 140, 1020, 300, 400,  250000000, 2, 0x0010, 0x03E0 },
 	[BH1750] = { 31,  254,  69,  1740, 57500000,  1, 0x001F, 0x00E0 },
 };
+
+static void bh1750_reset(struct bh1750_data *data)
+{
+	if (!data->reset_gpio)
+		return;
+
+	gpiod_set_value(data->reset_gpio, 0);
+	udelay(2); // More than 1µs is what the datasheet says
+	gpiod_set_value(data->reset_gpio, 1);
+
+	return;
+}
 
 static int bh1750_change_int_time(struct bh1750_data *data, int usec)
 {
@@ -247,6 +261,12 @@ static int bh1750_probe(struct i2c_client *client)
 	i2c_set_clientdata(client, indio_dev);
 	data->client = client;
 	data->chip_info = &bh1750_chip_info_tbl[id->driver_data];
+
+	data->reset_gpio = devm_gpiod_get_optional(&client->dev, "reset", GPIOD_OUT_HIGH);
+	if (IS_ERR(data->reset_gpio))
+		dev_warn(&client->dev, "Failed to get reset gpio\n");
+
+	bh1750_reset(data);
 
 	usec = data->chip_info->mtreg_to_usec * data->chip_info->mtreg_default;
 	ret = bh1750_change_int_time(data, usec);
