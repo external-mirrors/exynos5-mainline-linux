@@ -24,6 +24,11 @@ properties:
   reg:
     maxItems: 1
 
+  reset-gpios:
+    maxItems: 1
+    description: An optional reset line, should be flagged with
+      GPIO_ACTIVE_HIGH.
+
 required:
   - compatible
   - reg
@@ -39,6 +44,7 @@ examples:
       light-sensor@23 {
         compatible = "rohm,bh1750";
         reg = <0x23>;
+        reset-gpios = <&gph1 2 GPIO_ACTIVE_HIGH>;
       };
     };
 
