@@ -19,6 +19,7 @@
 
 #include <linux/w1.h>
 
+#include <linux/gpio/consumer.h>
 #include <linux/of.h>
 
 /*
@@ -111,6 +112,7 @@ struct ds2482_w1_chan {
 struct ds2482_data {
 	struct i2c_client	*client;
 	struct mutex		access_lock;
+	struct gpio_desc	*sleep_gpio;
 
 	/* 1-wire interface(s) */
 	int			w1_count;	/* 1 or 8 */
@@ -466,6 +468,10 @@ static int ds2482_probe(struct i2c_client *client)
 	data->client = client;
 	i2c_set_clientdata(client, data);
 
+	data->sleep_gpio = devm_gpiod_get_optional(&client->dev, "sleep", GPIOD_OUT_HIGH);
+	if (IS_ERR(data->sleep_gpio))
+		dev_warn(&client->dev, "Failed to get reset gpio\n");
+
 	/* Reset the device (sets the read_ptr to status) */
 	if (ds2482_send_cmd(data, DS2482_CMD_RESET) < 0) {
 		dev_warn(&client->dev, "DS2482 reset failed.\n");
@@ -534,6 +540,10 @@ static void ds2482_remove(struct i2c_client *client)
 	for (idx = 0; idx < data->w1_count; idx++) {
 		if (data->w1_ch[idx].pdev != NULL)
 			w1_remove_master_device(&data->w1_ch[idx].w1_bm);
+	}
+
+	if (data->sleep_gpio) {
+		gpiod_set_value(data->sleep_gpio, 0);
 	}
 }
 
