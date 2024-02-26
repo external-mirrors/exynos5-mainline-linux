@@ -18,6 +18,8 @@
 
 #include <linux/w1.h>
 
+#include <linux/of.h>
+
 /*
  * Allow the active pullup to be disabled, default is enabled.
  *
@@ -547,9 +549,19 @@ static const struct i2c_device_id ds2482_id[] = {
 };
 MODULE_DEVICE_TABLE(i2c, ds2482_id);
 
+#ifdef CONFIG_OF
+static const struct of_device_id ds2482_of_match[] = {
+	{ .compatible = "maxim,ds2482", },
+	{ .compatible = "maxim,ds2484", },
+	{ },
+};
+MODULE_DEVICE_TABLE(of, ds2482_of_match);
+#endif
+
 static struct i2c_driver ds2482_driver = {
 	.driver = {
-		.name	= "ds2482",
+		.name		= "ds2482",
+		.of_match_table	= of_match_ptr(ds2482_of_match),
 	},
 	.probe		= ds2482_probe,
 	.remove		= ds2482_remove,
