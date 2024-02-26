@@ -25,6 +25,10 @@ properties:
   reg:
     maxItems: 1
 
+  sleep-gpios:
+    maxItems: 1
+    description: GPIO connected to SLPZ pin.
+
 required:
   - compatible
   - reg
@@ -40,5 +44,9 @@ examples:
       onewire@18 {
         compatible = "maxim,ds2484";
         reg = <0x18>;
+
+        pinctrl-names = "default";
+        pinctrl-0 = <&onewire_sleep>;
+        sleep-gpios = <&gpg0 0 GPIO_ACTIVE_HIGH>;
       };
     };
