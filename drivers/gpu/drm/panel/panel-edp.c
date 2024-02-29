@@ -1631,6 +1631,11 @@ static const struct panel_desc samsung_ltl101dl02_002 = {
 		.width = 218,
 		.height = 136,
 	},
+	.delay = {
+		.hpd_absent = 200,
+		.unprepare = 500,
+	},
+
 };
 
 static const struct drm_display_mode samsung_ltn140at29_301_mode = {
