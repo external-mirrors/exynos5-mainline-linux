@@ -136,6 +136,13 @@ static const struct mfd_cell cros_ec_vbc_cells[] = {
 	{ .name = "cros-ec-vbc", }
 };
 
+static const struct mfd_cell cros_ec_tps65090[] = {
+       {
+               .name = "cros_ec-tps65090",
+               .of_compatible = "ti,cros-ec-tps65090",
+       }
+};
+
 static void cros_ec_class_release(struct device *dev)
 {
 	kfree(to_cros_ec_dev(dev));
@@ -287,6 +294,16 @@ static int ec_device_probe(struct platform_device *pdev)
 						ARRAY_SIZE(cros_ec_vbc_cells));
 		if (retval)
 			dev_warn(ec->dev, "failed to add VBC devices: %d\n",
+				 retval);
+	}
+
+	/* Check whether this EC instance has an LDO TPS65090 regulator */
+	node = ec->ec_dev->dev->of_node;
+	if (of_property_read_bool(node, "google,has-tps65090")) {
+		retval = mfd_add_hotplug_devices(ec->dev, cros_ec_tps65090,
+						ARRAY_SIZE(cros_ec_tps65090));
+		if (retval)
+			dev_warn(ec->dev, "failed to add TPS65090 devices: %d\n",
 				 retval);
 	}
 

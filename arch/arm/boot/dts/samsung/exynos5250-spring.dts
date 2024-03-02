@@ -396,6 +396,7 @@
 		wakeup-source;
 		pinctrl-names = "default";
 		pinctrl-0 = <&ec_irq>;
+		google,has-tps65090;
 
 		power-regulator {
 			compatible = "ti,cros-ec-tps65090";
