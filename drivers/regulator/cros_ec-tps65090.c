@@ -174,7 +174,7 @@ static int ec_tps65090_probe(struct platform_device *pdev)
 
 	id = 0;
 	for_each_child_of_node(reg_np, np) {
-		ri = of_get_regulator_init_data(dev, np);
+		ri = of_get_regulator_init_data(dev, np, NULL); // FIXME
 		if (!ri) {
 			dev_err(dev, "regulator_init_data failed for %s\n",
 				np->full_name);
