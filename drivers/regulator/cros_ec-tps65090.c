@@ -263,7 +263,7 @@ static int ec_tps65090_suspend(struct device *dev)
 				&rdev->constraints->state_mem;
 			const struct regulator_ops *ops = rdev->desc->ops;
 
-			if (rstate->disabled)
+			if (!rstate->enabled)
 				ops->set_suspend_disable(rdev);
 		}
 
@@ -283,7 +283,7 @@ static int ec_tps65090_resume(struct device *dev)
 				&rdev->constraints->state_mem;
 			const struct regulator_ops *ops = rdev->desc->ops;
 
-			if (rstate->disabled && (rdev->use_count > 0 ||
+			if (!rstate->enabled && (rdev->use_count > 0 ||
 						 rdev->constraints->always_on))
 				ops->enable(rdev);
 		}
