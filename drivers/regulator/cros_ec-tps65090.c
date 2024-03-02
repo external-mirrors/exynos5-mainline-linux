@@ -207,7 +207,7 @@ static int ec_tps65090_probe(struct platform_device *pdev)
 		config.driver_data = reg;
 		config.of_node = np;
 		config.init_data = ri;
-		reg->rdev = regulator_register(&reg->desc, &config);
+		reg->rdev = regulator_register(&pdev->dev, &reg->desc, &config);
 		dev_dbg(dev, "%s supply registered (FET%d)\n", reg->desc.name,
 			reg_to_ec_fet_index(reg));
 		data->regulators[id++] = reg;
