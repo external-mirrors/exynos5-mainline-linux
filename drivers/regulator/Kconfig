@@ -285,6 +285,13 @@ config REGULATOR_CROS_EC
 	  This driver can also be built as a module. If so, the module
 	  will be called cros-ec-regulator.
 
+config REGULATOR_CROS_EC_TPS65090
+	tristate "ChromeOS EC TPS65090 regulator"
+	depends on CROS_EC && OF
+	help
+	  Provides simple access to TPS65090 behind Chromeos EC.  Presently
+	  only enables FET switch control.
+
 config REGULATOR_DA903X
 	tristate "Dialog Semiconductor DA9030/DA9034 regulators"
 	depends on PMIC_DA903X
