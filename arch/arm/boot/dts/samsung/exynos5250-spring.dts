@@ -410,7 +410,7 @@
 
 			regulators {
 				vfet1 {
-					tps65090-control-reg = <0x0f>;
+					ti,tps65090-control-reg = <0x0f>;
 					regulator-name = "vcd_led";
 					regulator-min-microvolt = <12000000>;
 					regulator-max-microvolt = <12000000>;
@@ -419,14 +419,14 @@
 					regulator-always-on;
 				};
 				vfet3 {
-					tps65090-control-reg = <0x11>;
+					ti,tps65090-control-reg = <0x11>;
 					regulator-name = "wwan_r";
 					regulator-min-microvolt = <3300000>;
 					regulator-max-microvolt = <3300000>;
 					regulator-always-on;
 				};
 				vfet5 {
-					tps65090-control-reg = <0x13>;
+					ti,tps65090-control-reg = <0x13>;
 					regulator-name = "cam";
 					regulator-min-microvolt = <3300000>;
 					regulator-max-microvolt = <3300000>;
@@ -434,7 +434,7 @@
 					regulator-suspend-mem-disabled;
 				};
 				vfet6 {
-					tps65090-control-reg = <0x14>;
+					ti,tps65090-control-reg = <0x14>;
 					regulator-name = "lcd_vdd";
 					regulator-min-microvolt = <3300000>;
 					regulator-max-microvolt = <3300000>;
@@ -443,7 +443,7 @@
 					regulator-always-on;
 				};
 				vfet7 {
-					tps65090-control-reg = <0x15>;
+					ti,tps65090-control-reg = <0x15>;
 					regulator-name = "ts";
 					regulator-min-microvolt = <5000000>;
 					regulator-max-microvolt = <5000000>;
