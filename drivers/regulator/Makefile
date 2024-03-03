@@ -14,6 +14,7 @@ obj-$(CONFIG_REGULATOR_88PG86X) += 88pg86x.o
 obj-$(CONFIG_REGULATOR_88PM800) += 88pm800-regulator.o
 obj-$(CONFIG_REGULATOR_88PM8607) += 88pm8607.o
 obj-$(CONFIG_REGULATOR_CROS_EC) += cros-ec-regulator.o
+obj-$(CONFIG_REGULATOR_CROS_EC_TPS65090) += cros-ec-tps65090.o
 obj-$(CONFIG_REGULATOR_CPCAP) += cpcap-regulator.o
 obj-$(CONFIG_REGULATOR_AAT2870) += aat2870-regulator.o
 obj-$(CONFIG_REGULATOR_AB8500)	+= ab8500-ext.o ab8500.o
