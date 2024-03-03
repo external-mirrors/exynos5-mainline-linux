@@ -55,6 +55,16 @@
 		};
 	};
 
+	mmc3_pwrseq: mmc3-pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		reset-gpios = <&gpx0 2 GPIO_ACTIVE_LOW>, /* WIFI_RSTn */
+			      <&gpx0 1 GPIO_ACTIVE_LOW>; /* WIFI_EN */
+		clocks = <&s5m8767_osc S2MPS11_CLK_BT>;
+		clock-names = "ext_clock";
+		pinctrl-names = "default";
+		pinctrl-0 = <&wifi_en>, <&wifi_rst>;
+	};
+
 	panel {
 		compatible = "auo,b116xw03";
 		power-supply = <&tps65090_fet6>;
@@ -567,6 +577,7 @@
 	pinctrl-0 = <&sd1_clk &sd1_cmd &sd1_cd &sd1_bus4>;
 	bus-width = <4>;
 	cap-sd-highspeed;
+	mmc-pwrseq = <&mmc3_pwrseq>;
 };
 
 &pinctrl_0 {
@@ -575,6 +586,20 @@
 		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
 		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
 		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV3>;
+	};
+
+	wifi_en: wifi-en-pins {
+		samsung,pins = "gpx0-1";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+		samsung,pin-drv = <EXYNOS4_PIN_DRV_LV1>;
+	};
+
+	wifi_rst: wifi-rst-pins {
+		samsung,pins = "gpx0-2";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+		samsung,pin-drv = <EXYNOS4_PIN_DRV_LV1>;
 	};
 
 	s5m8767_dvs: s5m8767-dvs-pins {
