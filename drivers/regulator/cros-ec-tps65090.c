@@ -127,6 +127,12 @@ static int cros_ec_tps65090_probe(struct platform_device *pdev)
 			goto err;
 		}
 
+                if (init_data->constraints.min_uV != init_data->constraints.max_uV) {
+                        dev_err(dev,
+                                 "cros-ec-tps65090 regulator specified with variable voltages\n");
+                        goto err;
+                }
+
 		reg = devm_kzalloc(dev, sizeof(struct cros_ec_tps65090_regulator),
 				   GFP_KERNEL);
 		reg->desc.name = kstrdup(of_get_property(np, "regulator-name",
@@ -149,6 +155,8 @@ static int cros_ec_tps65090_probe(struct platform_device *pdev)
 		reg->desc.ops = &cros_ec_tps65090_fet_ops;
 		reg->desc.type = REGULATOR_VOLTAGE;
 		reg->desc.owner = THIS_MODULE;
+		reg->desc.n_voltages = 1;
+		reg->desc.fixed_uV = init_data->constraints.min_uV;
 
 		cfg.dev = dev->parent;
 		cfg.driver_data = reg;
