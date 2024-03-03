@@ -144,7 +144,7 @@ static int cros_ec_tps65090_probe(struct platform_device *pdev)
 			goto err;
 		}
 
-		if (of_property_read_u32(np, "tps65090-control-reg",
+		if (of_property_read_u32(np, "ti,tps65090-control-reg",
 					 &reg->control_reg)) {
 			dev_err(dev, "no control-reg property at %s\n",
 				np->full_name);
