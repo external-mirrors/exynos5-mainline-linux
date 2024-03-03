@@ -99,6 +99,27 @@
 		regulator-name = "vbat-supply";
 		regulator-boot-on;
 	};
+
+	sound {
+		compatible = "google,snow-audio-max98089";
+
+		samsung,model = "Spring-I2S-MAX98089";
+		samsung,i2s-controller = <&i2s0>;
+		samsung,audio-codec = <&max98089>;
+		samsung,hp-det-gpios = <&gpx2 2 GPIO_ACTIVE_HIGH>;
+		samsung,mic-det-gpios = <&gpx2 0 GPIO_ACTIVE_LOW>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&hp_det_gpio &mic_det_gpio>;
+
+		cpu {
+			sound-dai = <&i2s0 0>;
+		};
+
+		codec {
+			sound-dai = <&max98089>;
+		};
+	};
 };
 
 &cpu0 {
@@ -524,6 +545,14 @@
 		};
 	};
 
+	max98089: audio-codec@10 {
+		compatible = "maxim,max98089";
+		reg = <0x10>;
+		clocks = <&pmu_system_controller 0>;
+		clock-names = "mclk";
+		#sound-dai-cells = <0>;
+	};
+
 	temperature-sensor@4c {
 		compatible = "gmt,g781";
 		reg = <0x4c>;
@@ -646,6 +675,20 @@
 		samsung,pin-drv = <EXYNOS4_PIN_DRV_LV1>;
 	};
 
+	mic_det_gpio: mic-det-gpio-pins {
+		samsung,pins = "gpx2-0";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_INPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+		samsung,pin-drv = <EXYNOS4_PIN_DRV_LV1>;
+	};
+
+	hp_det_gpio: hp-det-gpio-pins {
+		samsung,pins = "gpx2-2";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_INPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_DOWN>;
+		samsung,pin-drv = <EXYNOS4_PIN_DRV_LV1>;
+	};
+
 	s5m8767_ds: s5m8767-ds-pins {
 		samsung,pins = "gpx2-3", "gpx2-4", "gpx2-5";
 		samsung,pin-function = <EXYNOS_PIN_FUNC_INPUT>;
@@ -682,6 +725,11 @@
 		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
 		samsung,pin-drv = <EXYNOS4_PIN_DRV_LV1>;
 	};
+};
+
+&pmu_system_controller {
+	assigned-clocks = <&pmu_system_controller 0>;
+	assigned-clock-parents = <&clock CLK_FIN_PLL>;
 };
 
 &rtc {
