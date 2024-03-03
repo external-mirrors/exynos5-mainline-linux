@@ -73,21 +73,10 @@ static int cros_ec_tps65090_fet_is_enabled(struct regulator_dev *dev)
 	return resp.state;
 }
 
-static int cros_ec_tps65090_set_voltage(struct regulator_dev *dev, int min_uV,
-					int max_uV, unsigned int *selector)
-{
-	/*
-	 * Only needed for the core code to set constraints; the voltage
-	 * isn't actually adjustable on tps65090.
-	 */
-	return 0;
-}
-
 static struct regulator_ops cros_ec_tps65090_fet_ops = {
 	.enable	= cros_ec_tps65090_fet_enable,
 	.disable = cros_ec_tps65090_fet_disable,
 	.is_enabled = cros_ec_tps65090_fet_is_enabled,
-	.set_voltage = cros_ec_tps65090_set_voltage,
 	.set_suspend_enable = cros_ec_tps65090_fet_enable,
 	.set_suspend_disable = cros_ec_tps65090_fet_disable,
 };
