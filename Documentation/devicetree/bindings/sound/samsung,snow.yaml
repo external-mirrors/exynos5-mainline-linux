@@ -13,6 +13,7 @@ maintainers:
 properties:
   compatible:
     enum:
+      - google,snow-audio-max98089
       - google,snow-audio-max98090
       - google,snow-audio-max98091
       - google,snow-audio-max98095
