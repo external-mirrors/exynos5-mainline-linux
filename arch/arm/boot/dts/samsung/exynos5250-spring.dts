@@ -68,6 +68,12 @@
 			clock-frequency = <24000000>;
 		};
 	};
+
+	vbat: vbat-fixed-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vbat-supply";
+		regulator-boot-on;
+	};
 };
 
 &cpu0 {
@@ -390,6 +396,56 @@
 		wakeup-source;
 		pinctrl-names = "default";
 		pinctrl-0 = <&ec_irq>;
+
+		power-regulator {
+			compatible = "ti,cros-ec-tps65090";
+
+			infet1-supply = <&vbat>;
+			infet2-supply = <&vbat>;
+			infet3-supply = <&vbat>;
+			infet4-supply = <&vbat>;
+			infet5-supply = <&vbat>;
+			infet6-supply = <&vbat>;
+			infet7-supply = <&vbat>;
+
+			regulators {
+				fet1 {
+					ti,control-reg = <0x0f>;
+					regulator-name = "vcd_led";
+					regulator-min-microvolt = <12000000>;
+					regulator-max-microvolt = <12000000>;
+					/* Panel backlight controlled by ps8622 bridge */
+					regulator-always-on;
+				};
+				tps65090_fet3: fet3 {
+					ti,control-reg = <0x11>;
+					regulator-name = "wwan_r";
+					regulator-min-microvolt = <3300000>;
+					regulator-max-microvolt = <3300000>;
+				};
+				fet5 {
+					ti,control-reg = <0x13>;
+					regulator-name = "cam";
+					regulator-min-microvolt = <3300000>;
+					regulator-max-microvolt = <3300000>;
+					/* Camera is connected to USB */
+					regulator-always-on;
+					regulator-suspend-mem-disabled;
+				};
+				tps65090_fet6: fet6 {
+					ti,control-reg = <0x14>;
+					regulator-name = "lcd_vdd";
+					regulator-min-microvolt = <3300000>;
+					regulator-max-microvolt = <3300000>;
+				};
+				tps65090_fet7: fet7 {
+					ti,control-reg = <0x15>;
+					regulator-name = "ts";
+					regulator-min-microvolt = <5000000>;
+					regulator-max-microvolt = <5000000>;
+				};
+			};
+		};
 	};
 };
 
