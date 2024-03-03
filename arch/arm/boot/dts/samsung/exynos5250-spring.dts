@@ -55,6 +55,21 @@
 		};
 	};
 
+	panel {
+		/* 
+		 * FIXME: The actual panel model is unknown, we use auo b116xw03
+		 * because of compatible timings.
+		 */
+		compatible = "auo,b116xw03";
+		power-supply = <&tps65090_fet6>;
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&bridge_out>;
+			};
+		};
+	};
+
 	usb-hub {
 		compatible = "smsc,usb3503a";
 		reset-gpios = <&gpe1 0 GPIO_ACTIVE_LOW>;
@@ -89,6 +104,14 @@
 	samsung,link-rate = <0x0a>;
 	samsung,lane-count = <1>;
 	hpd-gpios = <&gpc3 0 GPIO_ACTIVE_HIGH>;
+
+	ports {
+		port {
+			dp_out: endpoint {
+				remote-endpoint = <&bridge_in>;
+			};
+		};
+	};
 };
 
 &ehci {
@@ -460,6 +483,37 @@
 	samsung,i2c-sda-delay = <100>;
 	samsung,i2c-max-bus-freq = <66000>;
 
+	edp-bridge@8 {
+		compatible = "parade,ps8622";
+		reg = <0x08>;
+		sleep-gpio = <&gpc3 6 0>;
+		reset-gpio = <&gpc3 1 0>;
+		lane-count = <1>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&ps8622_gpios>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+
+				bridge_out: endpoint {
+					remote-endpoint = <&panel_in>;
+				};
+			};
+
+			port@1 {
+				reg = <1>;
+
+				bridge_in: endpoint {
+					remote-endpoint = <&dp_out>;
+				};
+			};
+		};
+	};
+
 	temperature-sensor@4c {
 		compatible = "gmt,g781";
 		reg = <0x4c>;
@@ -539,6 +593,13 @@
 		samsung,pin-function = <EXYNOS_PIN_FUNC_F>;
 		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
 		samsung,pin-drv = <EXYNOS4_PIN_DRV_LV1>;
+	};
+
+	ps8622_gpios: ps8622-pins {
+		samsung,pins = "gpc3-1", "gpc3-6";
+		samsung,pin-function = <1>;
+		samsung,pin-pud = <0>;
+		samsung,pin-drv = <0>;
 	};
 
 	power_key_irq: power-key-irq-pins {
