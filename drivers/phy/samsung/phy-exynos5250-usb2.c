@@ -10,6 +10,7 @@
 #include <linux/io.h>
 #include <linux/phy/phy.h>
 #include <linux/regmap.h>
+#include <linux/of.h>
 #include "phy-samsung-usb2.h"
 
 /* Exynos USB PHY registers */
@@ -234,10 +235,34 @@ static int exynos5250_power_on(struct samsung_usb2_phy_instance *inst)
 	case EXYNOS5250_HOST:
 	case EXYNOS5250_HSIC0:
 	case EXYNOS5250_HSIC1:
-		regmap_update_bits(drv->reg_sys,
-				   EXYNOS_5250_MODE_SWITCH_OFFSET,
-				   EXYNOS_5250_MODE_SWITCH_MASK,
-				   EXYNOS_5250_MODE_SWITCH_HOST);
+		if (of_machine_is_compatible("samsung,nexus10-manta")) {
+			regmap_update_bits(drv->reg_sys,
+					EXYNOS_5250_MODE_SWITCH_OFFSET,
+					EXYNOS_5250_MODE_SWITCH_MASK,
+					EXYNOS_5250_MODE_SWITCH_HOST);
+		} else {
+			/* Host registers configuration */
+			ctrl0 = readl(drv->reg_phy + EXYNOS_5250_HOSTPHYCTRL0);
+			/* The clock */
+			ctrl0 &= ~EXYNOS_5250_HOSTPHYCTRL0_FSEL_MASK;
+			ctrl0 |= drv->ref_reg_val <<
+						EXYNOS_5250_HOSTPHYCTRL0_FSEL_SHIFT;
+
+			/* Reset */
+			ctrl0 &=	~(EXYNOS_5250_HOSTPHYCTRL0_PHYSWRST |
+					EXYNOS_5250_HOSTPHYCTRL0_PHYSWRSTALL |
+					EXYNOS_5250_HOSTPHYCTRL0_SIDDQ |
+					EXYNOS_5250_HOSTPHYCTRL0_FORCESUSPEND |
+					EXYNOS_5250_HOSTPHYCTRL0_FORCESLEEP);
+			ctrl0 |=	EXYNOS_5250_HOSTPHYCTRL0_LINKSWRST |
+					EXYNOS_5250_HOSTPHYCTRL0_UTMISWRST |
+					EXYNOS_5250_HOSTPHYCTRL0_COMMON_ON_N;
+			writel(ctrl0, drv->reg_phy + EXYNOS_5250_HOSTPHYCTRL0);
+			udelay(10);
+			ctrl0 &=	~(EXYNOS_5250_HOSTPHYCTRL0_LINKSWRST |
+					EXYNOS_5250_HOSTPHYCTRL0_UTMISWRST);
+			writel(ctrl0, drv->reg_phy + EXYNOS_5250_HOSTPHYCTRL0);
+		}
 
 		/* OTG configuration */
 		otg = readl(drv->reg_phy + EXYNOS_5250_USBOTGSYS);
@@ -261,59 +286,93 @@ static int exynos5250_power_on(struct samsung_usb2_phy_instance *inst)
 		otg &= ~(EXYNOS_5250_USBOTGSYS_PHY_SW_RST |
 			EXYNOS_5250_USBOTGSYS_LINK_SW_RST_UOTG |
 			EXYNOS_5250_USBOTGSYS_PHYLINK_SW_RESET);
-		writel(otg, drv->reg_phy + EXYNOS_5250_USBOTGSYS);
+		
+		if (of_machine_is_compatible("samsung,nexus10-manta")) {
+			writel(otg, drv->reg_phy + EXYNOS_5250_USBOTGSYS);
+		} else {
+			/* HSIC phy configuration */
+			hsic = (EXYNOS_5250_HSICPHYCTRLX_REFCLKDIV_12 |
+					EXYNOS_5250_HSICPHYCTRLX_REFCLKSEL_DEFAULT |
+					EXYNOS_5250_HSICPHYCTRLX_PHYSWRST);
+			writel(hsic, drv->reg_phy + EXYNOS_5250_HSICPHYCTRL1);
+			writel(hsic, drv->reg_phy + EXYNOS_5250_HSICPHYCTRL2);
+			udelay(10);
+			hsic &= ~EXYNOS_5250_HSICPHYCTRLX_PHYSWRST;
+			writel(hsic, drv->reg_phy + EXYNOS_5250_HSICPHYCTRL1);
+			writel(hsic, drv->reg_phy + EXYNOS_5250_HSICPHYCTRL2);
+			/* The following delay is necessary for the reset sequence to be
+			* completed */
+			udelay(80);
+
+			/* Enable EHCI DMA burst */
+			ehci = readl(drv->reg_phy + EXYNOS_5250_HOSTEHCICTRL);
+			ehci |=	EXYNOS_5250_HOSTEHCICTRL_ENAINCRXALIGN |
+				EXYNOS_5250_HOSTEHCICTRL_ENAINCR4 |
+				EXYNOS_5250_HOSTEHCICTRL_ENAINCR8 |
+				EXYNOS_5250_HOSTEHCICTRL_ENAINCR16;
+			writel(ehci, drv->reg_phy + EXYNOS_5250_HOSTEHCICTRL);
+
+			/* OHCI settings */
+			ohci = readl(drv->reg_phy + EXYNOS_5250_HOSTOHCICTRL);
+			/* Following code is based on the old driver */
+			ohci |=	0x1 << 3;
+			writel(ohci, drv->reg_phy + EXYNOS_5250_HOSTOHCICTRL);
+		}
 
 		break;
 	}
-	/* Host registers configuration */
-	ctrl0 = readl(drv->reg_phy + EXYNOS_5250_HOSTPHYCTRL0);
-	/* The clock */
-	ctrl0 &= ~EXYNOS_5250_HOSTPHYCTRL0_FSEL_MASK;
-	ctrl0 |= drv->ref_reg_val <<
-				EXYNOS_5250_HOSTPHYCTRL0_FSEL_SHIFT;
 
-	/* Reset */
-	ctrl0 &=	~(EXYNOS_5250_HOSTPHYCTRL0_PHYSWRST |
-			EXYNOS_5250_HOSTPHYCTRL0_PHYSWRSTALL |
-			EXYNOS_5250_HOSTPHYCTRL0_SIDDQ |
-			EXYNOS_5250_HOSTPHYCTRL0_FORCESUSPEND |
-			EXYNOS_5250_HOSTPHYCTRL0_FORCESLEEP);
-	ctrl0 |=	EXYNOS_5250_HOSTPHYCTRL0_LINKSWRST |
-			EXYNOS_5250_HOSTPHYCTRL0_UTMISWRST |
-			EXYNOS_5250_HOSTPHYCTRL0_COMMON_ON_N;
-	writel(ctrl0, drv->reg_phy + EXYNOS_5250_HOSTPHYCTRL0);
-	udelay(10);
-	ctrl0 &=	~(EXYNOS_5250_HOSTPHYCTRL0_LINKSWRST |
-			EXYNOS_5250_HOSTPHYCTRL0_UTMISWRST);
-	writel(ctrl0, drv->reg_phy + EXYNOS_5250_HOSTPHYCTRL0);
+	if (of_machine_is_compatible("samsung,nexus10-manta")) {
+		/* Host registers configuration */
+		ctrl0 = readl(drv->reg_phy + EXYNOS_5250_HOSTPHYCTRL0);
+		/* The clock */
+		ctrl0 &= ~EXYNOS_5250_HOSTPHYCTRL0_FSEL_MASK;
+		ctrl0 |= drv->ref_reg_val <<
+					EXYNOS_5250_HOSTPHYCTRL0_FSEL_SHIFT;
 
-	/* HSIC phy configuration */
-	hsic = (EXYNOS_5250_HSICPHYCTRLX_REFCLKDIV_12 |
-			EXYNOS_5250_HSICPHYCTRLX_REFCLKSEL_DEFAULT |
-			EXYNOS_5250_HSICPHYCTRLX_PHYSWRST);
-	writel(hsic, drv->reg_phy + EXYNOS_5250_HSICPHYCTRL1);
-	writel(hsic, drv->reg_phy + EXYNOS_5250_HSICPHYCTRL2);
-	udelay(10);
-	hsic &= ~EXYNOS_5250_HSICPHYCTRLX_PHYSWRST;
-	writel(hsic, drv->reg_phy + EXYNOS_5250_HSICPHYCTRL1);
-	writel(hsic, drv->reg_phy + EXYNOS_5250_HSICPHYCTRL2);
-	/* The following delay is necessary for the reset sequence to be
-	 * completed */
-	udelay(80);
+		/* Reset */
+		ctrl0 &=	~(EXYNOS_5250_HOSTPHYCTRL0_PHYSWRST |
+				EXYNOS_5250_HOSTPHYCTRL0_PHYSWRSTALL |
+				EXYNOS_5250_HOSTPHYCTRL0_SIDDQ |
+				EXYNOS_5250_HOSTPHYCTRL0_FORCESUSPEND |
+				EXYNOS_5250_HOSTPHYCTRL0_FORCESLEEP);
+		ctrl0 |=	EXYNOS_5250_HOSTPHYCTRL0_LINKSWRST |
+				EXYNOS_5250_HOSTPHYCTRL0_UTMISWRST |
+				EXYNOS_5250_HOSTPHYCTRL0_COMMON_ON_N;
+		writel(ctrl0, drv->reg_phy + EXYNOS_5250_HOSTPHYCTRL0);
+		udelay(10);
+		ctrl0 &=	~(EXYNOS_5250_HOSTPHYCTRL0_LINKSWRST |
+				EXYNOS_5250_HOSTPHYCTRL0_UTMISWRST);
+		writel(ctrl0, drv->reg_phy + EXYNOS_5250_HOSTPHYCTRL0);
 
-	/* Enable EHCI DMA burst */
-	ehci = readl(drv->reg_phy + EXYNOS_5250_HOSTEHCICTRL);
-	ehci |=	EXYNOS_5250_HOSTEHCICTRL_ENAINCRXALIGN |
-		EXYNOS_5250_HOSTEHCICTRL_ENAINCR4 |
-		EXYNOS_5250_HOSTEHCICTRL_ENAINCR8 |
-		EXYNOS_5250_HOSTEHCICTRL_ENAINCR16;
-	writel(ehci, drv->reg_phy + EXYNOS_5250_HOSTEHCICTRL);
+		/* HSIC phy configuration */
+		hsic = (EXYNOS_5250_HSICPHYCTRLX_REFCLKDIV_12 |
+				EXYNOS_5250_HSICPHYCTRLX_REFCLKSEL_DEFAULT |
+				EXYNOS_5250_HSICPHYCTRLX_PHYSWRST);
+		writel(hsic, drv->reg_phy + EXYNOS_5250_HSICPHYCTRL1);
+		writel(hsic, drv->reg_phy + EXYNOS_5250_HSICPHYCTRL2);
+		udelay(10);
+		hsic &= ~EXYNOS_5250_HSICPHYCTRLX_PHYSWRST;
+		writel(hsic, drv->reg_phy + EXYNOS_5250_HSICPHYCTRL1);
+		writel(hsic, drv->reg_phy + EXYNOS_5250_HSICPHYCTRL2);
+		/* The following delay is necessary for the reset sequence to be
+		* completed */
+		udelay(80);
 
-	/* OHCI settings */
-	ohci = readl(drv->reg_phy + EXYNOS_5250_HOSTOHCICTRL);
-	/* Following code is based on the old driver */
-	ohci |=	0x1 << 3;
-	writel(ohci, drv->reg_phy + EXYNOS_5250_HOSTOHCICTRL);
+		/* Enable EHCI DMA burst */
+		ehci = readl(drv->reg_phy + EXYNOS_5250_HOSTEHCICTRL);
+		ehci |=	EXYNOS_5250_HOSTEHCICTRL_ENAINCRXALIGN |
+			EXYNOS_5250_HOSTEHCICTRL_ENAINCR4 |
+			EXYNOS_5250_HOSTEHCICTRL_ENAINCR8 |
+			EXYNOS_5250_HOSTEHCICTRL_ENAINCR16;
+		writel(ehci, drv->reg_phy + EXYNOS_5250_HOSTEHCICTRL);
+
+		/* OHCI settings */
+		ohci = readl(drv->reg_phy + EXYNOS_5250_HOSTOHCICTRL);
+		/* Following code is based on the old driver */
+		ohci |=	0x1 << 3;
+		writel(ohci, drv->reg_phy + EXYNOS_5250_HOSTOHCICTRL);
+	}
 
 	exynos5250_isol(inst, 0);
 
