@@ -775,4 +775,8 @@
 	vdd33-supply = <&ldo12_reg>;
 };
 
+&usbdrd_dwc3 {
+	dr_mode = "host";
+};
+
 #include "cros-ec-keyboard.dtsi"
