@@ -207,6 +207,18 @@
 		enable-active-high;
 	};
 
+	/* Make sure modem connected to USB is powered on */
+	regulator-wwan-en {
+		compatible = "regulator-fixed";
+		regulator-name = "wwan-en";
+		gpio = <&gpe0 0 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+		regulator-always-on;
+		pinctrl-names = "default";
+		pinctrl-0 = <&wwan_en>;
+	};
+
 	fixed-rate-clocks {
 		xxti {
 			compatible = "samsung,clock-xxti";
@@ -726,6 +738,13 @@
 
 	usb_hub_reset: usb-hub-reset-pins {
 		samsung,pins = "gpe1-0";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+		samsung,pin-drv = <EXYNOS4_PIN_DRV_LV1>;
+	};
+
+	wwan_en: wwan-en-pins {
+		samsung,pins = "gpe0-0";
 		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
 		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
 		samsung,pin-drv = <EXYNOS4_PIN_DRV_LV1>;
