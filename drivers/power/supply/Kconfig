@@ -841,6 +841,12 @@ config CHARGER_RT9471
 	  This driver can also be built as a module. If so, the module will be
 	  called rt9471.
 
+config CHARGER_CROS_EC
+	tristate "Chromeos EC charger"
+	depends on MFD_CROS_EC_DEV
+	help
+	  Provides access to TPS65090 charger behind Chrome OS EC.
+
 config CHARGER_CROS_USBPD
 	tristate "ChromeOS EC based USBPD charger"
 	depends on CROS_USBPD_NOTIFY
