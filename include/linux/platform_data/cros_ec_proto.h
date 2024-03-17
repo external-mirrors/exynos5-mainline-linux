@@ -198,6 +198,9 @@ struct cros_ec_device {
 	struct platform_device *pd;
 
 	struct blocking_notifier_head panic_notifier;
+
+	/* for cros_ec-charger.c */
+	struct power_supply *charger;
 };
 
 /**

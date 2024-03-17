@@ -21,7 +21,7 @@
 #include <linux/err.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
-#include <linux/of_device.h>
+#include <linux/of.h>
 #include <linux/platform_data/cros_ec_commands.h>
 #include <linux/platform_data/cros_ec_proto.h>
 #include <linux/platform_device.h>
@@ -265,11 +265,18 @@ static int cros_ec_charger_resume(struct device *dev)
 static SIMPLE_DEV_PM_OPS(cros_ec_charger_pm_ops, NULL,
 			 cros_ec_charger_resume);
 
+static const struct of_device_id cros_ec_charger_of_match[] = {
+	{ .compatible = "ti,cros-ec-charger", },
+	{}
+};
+MODULE_DEVICE_TABLE(of, cros_ec_charger_of_match);
+
 static struct platform_driver cros_ec_charger_driver = {
 	.driver = {
 		.name = "cros-ec-charger",
 		.owner = THIS_MODULE,
 		.pm = &cros_ec_charger_pm_ops,
+		.of_match_table = cros_ec_charger_of_match,
 	},
 	.probe = cros_ec_charger_probe,
 	.remove = cros_ec_charger_remove,
