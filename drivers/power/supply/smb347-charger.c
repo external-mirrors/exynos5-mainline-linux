@@ -47,6 +47,8 @@
 #define CFG_FLOAT_VOLTAGE_FLOAT_MASK		0x3f
 #define CFG_FLOAT_VOLTAGE_THRESHOLD_MASK	0xc0
 #define CFG_FLOAT_VOLTAGE_THRESHOLD_SHIFT	6
+#define CFG_CHARGE_CONTROL			0x04
+#define CFG_CHARGE_CONTROL_EN_APSD		BIT(2)
 #define CFG_STAT				0x05
 #define CFG_STAT_DISABLED			BIT(5)
 #define CFG_STAT_ACTIVE_HIGH			BIT(7)
@@ -128,9 +130,20 @@
 #define STAT_C_CHG_SHIFT			1
 #define STAT_C_CHG_TERM				BIT(5)
 #define STAT_C_CHARGER_ERROR			BIT(6)
+#define STAT_D					0x3e
+#define STAT_D_APSD_RESULT_MASK			0x7
+#define STAT_D_APSD_COMPLETE			BIT(3)
 #define STAT_E					0x3f
 
 #define SMB347_MAX_REGISTER			0x3f
+
+/* APSD results */
+#define APSD_RESULT_NOT_RUN			0
+#define APSD_RESULT_CDP				1
+#define APSD_RESULT_DCP				2
+#define APSD_RESULT_OTHER_CHARGER		3
+#define APSD_RESULT_SDP				4
+#define APSD_RESULT_ACA				5
 
 /**
  * struct smb347_charger - smb347 charger instance
@@ -176,6 +189,7 @@
  *		    (driver/pin controls)
  * @inok_polarity: polarity of INOK signal which denotes presence of external
  *		   power supply
+ * @apsd: Automatic Power Supply Detection is enabled
  *
  * @use_main, @use_usb, and @use_usb_otg are means to enable/disable
  * hardware support for these. This is useful when we want to have for
@@ -225,6 +239,7 @@ struct smb347_charger {
 	bool			use_usb_otg;
 	unsigned int		enable_control;
 	unsigned int		inok_polarity;
+	bool			apsd;
 };
 
 enum smb_charger_chipid {
@@ -789,6 +804,16 @@ static int smb347_hw_init(struct smb347_charger *smb)
 	if (ret < 0)
 		goto fail;
 
+	/*
+	 * If configured by platform data, we enable APSD to determine charger
+	 * type. Otherwise we disable it.
+	 */
+	ret = regmap_update_bits(smb->regmap, CFG_CHARGE_CONTROL,
+				 CFG_CHARGE_CONTROL_EN_APSD,
+				 (smb->apsd) ? CFG_CHARGE_CONTROL_EN_APSD : 0);
+	if (ret < 0)
+		goto fail;
+
 	ret = smb347_update_ps_status(smb);
 	if (ret < 0)
 		goto fail;
@@ -1113,6 +1138,40 @@ static int smb347_get_charging_status(struct smb347_charger *smb,
 	return status;
 }
 
+static int apsd_detect(struct smb347_charger *smb,
+		       struct power_supply *psy)
+{
+	int ret;
+	unsigned int v;
+
+	if (psy->desc->type != POWER_SUPPLY_TYPE_USB)
+		return -ENODATA;
+	if (!smb->usb_online)
+		return -ENODATA;
+
+	if (!smb->apsd)
+		return POWER_SUPPLY_USB_TYPE_UNKNOWN;
+
+	ret = regmap_read(smb->regmap, STAT_D, &v);
+	if (ret < 0)
+		return ret;
+	if (!(v & STAT_D_APSD_COMPLETE))
+		return POWER_SUPPLY_USB_TYPE_UNKNOWN;
+
+	switch (v & STAT_D_APSD_RESULT_MASK) {
+	case APSD_RESULT_CDP:
+		return POWER_SUPPLY_USB_TYPE_CDP;
+	case APSD_RESULT_DCP:
+		return POWER_SUPPLY_USB_TYPE_DCP;
+	case APSD_RESULT_SDP:
+		return POWER_SUPPLY_USB_TYPE_SDP;
+	case APSD_RESULT_ACA:
+		return POWER_SUPPLY_USB_TYPE_ACA;
+	}
+
+	return POWER_SUPPLY_USB_TYPE_UNKNOWN;
+}
+
 static int smb347_get_property_locked(struct power_supply *psy,
 				      enum power_supply_property prop,
 				      union power_supply_propval *val)
@@ -1176,6 +1235,13 @@ static int smb347_get_property_locked(struct power_supply *psy,
 		val->intval = ret;
 		break;
 
+	case POWER_SUPPLY_PROP_USB_TYPE:
+		ret = apsd_detect(smb, psy);
+		if (ret < 0)
+			return ret;
+		val->intval = ret;
+		break;
+
 	default:
 		return -EINVAL;
 	}
@@ -1202,7 +1268,16 @@ static int smb347_get_property(struct power_supply *psy,
 	return ret;
 }
 
-static enum power_supply_property smb347_properties[] = {
+static enum power_supply_property smb347_usb_properties[] = {
+	POWER_SUPPLY_PROP_STATUS,
+	POWER_SUPPLY_PROP_CHARGE_TYPE,
+	POWER_SUPPLY_PROP_ONLINE,
+	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT,
+	POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE,
+	POWER_SUPPLY_PROP_USB_TYPE,
+};
+
+static enum power_supply_property smb347_mains_properties[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_CHARGE_TYPE,
 	POWER_SUPPLY_PROP_ONLINE,
@@ -1221,6 +1296,7 @@ static bool smb347_volatile_reg(struct device *dev, unsigned int reg)
 	case STAT_A:
 	case STAT_B:
 	case STAT_C:
+	case STAT_D:
 	case STAT_E:
 		return true;
 	}
@@ -1234,6 +1310,7 @@ static bool smb347_readable_reg(struct device *dev, unsigned int reg)
 	case CFG_CHARGE_CURRENT:
 	case CFG_CURRENT_LIMIT:
 	case CFG_FLOAT_VOLTAGE:
+	case CFG_CHARGE_CONTROL:
 	case CFG_STAT:
 	case CFG_PIN:
 	case CFG_THERM:
@@ -1299,6 +1376,10 @@ static void smb347_dt_parse_dev_info(struct smb347_charger *smb)
 	 */
 	device_property_read_u32(dev, "summit,inok-polarity",
 				 &smb->inok_polarity);
+
+	/* Automatic power source detection */
+	smb->apsd = device_property_read_bool(dev, "summit,enable-apsd");
+
 }
 
 static int smb347_get_battery_info(struct smb347_charger *smb)
@@ -1525,16 +1606,21 @@ static const struct power_supply_desc smb347_mains_desc = {
 	.name		= "smb347-mains",
 	.type		= POWER_SUPPLY_TYPE_MAINS,
 	.get_property	= smb347_get_property,
-	.properties	= smb347_properties,
-	.num_properties	= ARRAY_SIZE(smb347_properties),
+	.properties	= smb347_mains_properties,
+	.num_properties	= ARRAY_SIZE(smb347_mains_properties),
 };
 
 static const struct power_supply_desc smb347_usb_desc = {
 	.name		= "smb347-usb",
 	.type		= POWER_SUPPLY_TYPE_USB,
+	.usb_types	= BIT(POWER_SUPPLY_USB_TYPE_UNKNOWN) |
+			  BIT(POWER_SUPPLY_USB_TYPE_SDP) |
+			  BIT(POWER_SUPPLY_USB_TYPE_DCP) |
+			  BIT(POWER_SUPPLY_USB_TYPE_CDP) |
+			  BIT(POWER_SUPPLY_USB_TYPE_ACA),
 	.get_property	= smb347_get_property,
-	.properties	= smb347_properties,
-	.num_properties	= ARRAY_SIZE(smb347_properties),
+	.properties	= smb347_usb_properties,
+	.num_properties	= ARRAY_SIZE(smb347_usb_properties),
 };
 
 static const struct regulator_desc smb347_usb_vbus_regulator_desc = {
