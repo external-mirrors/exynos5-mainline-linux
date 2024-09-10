@@ -1,0 +1,653 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Samsung's Exynos5420 n2awifi board device tree source
+ *
+ * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ * Copyright (c) 2022 Henrik Grimler
+ * Copyright (c) 2024 Hendrik Noack
+ */
+
+/dts-v1/;
+#include "exynos5420.dtsi"
+#include "exynos5420-cpus.dtsi"
+#include <dt-bindings/clock/maxim,max77802.h>
+#include <dt-bindings/regulator/maxim,max77802.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+
+/ {
+	chassis-type = "tablet";
+	model = "Samsung n2awifi based on Exynos5420";
+	compatible = "samsung,n2awifi", "samsung,exynos5420", \
+			"samsung,exynos5";
+
+	aliases {
+		mmc0 = &mmc_0;	/* Internal storage */
+		mmc1 = &mmc_1;	/* WiFi */
+		mmc2 = &mmc_2;	/* External sdcard */
+	};
+
+	chosen {
+		stdout-path = "serial2:115200n8";
+	};
+
+	memory@20000000 {
+		device_type = "memory";
+		reg = <0x20000000 0x7fa00000>;
+	};
+
+	firmware@2073000 {
+		compatible = "samsung,secure-firmware";
+		reg = <0x02073000 0x1000>;
+	};
+
+	fixed-rate-clocks {
+		oscclk {
+			compatible = "samsung,exynos5420-oscclk";
+			clock-frequency = <24000000>;
+		};
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+
+		key-power {
+			debounce-interval = <10>;
+			gpios = <&gpx2 2 GPIO_ACTIVE_LOW>;
+			label = "Power";
+			linux,code = <KEY_POWER>;
+			wakeup-source;
+		};
+
+		key-home {
+			debounce-interval = <10>;
+			gpios = <&gpx0 5 GPIO_ACTIVE_LOW>;
+			label = "Home";
+			linux,code = <KEY_HOME>;
+			wakeup-source;
+		};
+
+		key-volume-up {
+			debounce-interval = <10>;
+			gpios = <&gpx0 2 GPIO_ACTIVE_LOW>;
+			label = "Volume Up";
+			linux,code = <KEY_VOLUMEUP>;
+		};
+
+		key-volume-down {
+			debounce-interval = <10>;
+			gpios = <&gpx0 3 GPIO_ACTIVE_LOW>;
+			label = "Volume Down";
+			linux,code = <KEY_VOLUMEDOWN>;
+		};
+	};
+
+	mmc1_pwrseq: pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		reset-gpios = <&gpy7 7 GPIO_ACTIVE_LOW>;
+		clocks = <&max77802 MAX77802_CLK_32K_CP>;
+		clock-names = "ext_clock";
+	};
+
+	i2c_fuel: i2c-18 {
+		compatible = "i2c-gpio";
+		pinctrl-names = "default";
+		pinctrl-0 = <&i2c18_gpio_bus>;
+		sda-gpios = <&gpb0 3 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+		scl-gpios = <&gpb0 4 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+		i2c-gpio,delay-us = <2>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		battery@36 {
+			compatible = "maxim,max17050";
+			reg = <0x36>;
+			pinctrl-0 = <&fuel_alert_irq>;
+			pinctrl-names = "default";
+			interrupt-parent = <&gpx1>;
+			interrupts = <5 IRQ_TYPE_EDGE_BOTH>;
+			maxim,rsns-microohm = <10000>;
+			maxim,over-heat-temp = <600>;
+			maxim,over-volt = <4300>;
+		};
+	};
+};
+
+&cci {
+	/* CCI is disabled in hardware */
+	status = "disabled";
+};
+
+&cpu0 {
+	cpu-supply = <&buck2_reg>;
+};
+
+&cpu4 {
+	cpu-supply = <&buck6_reg>;
+};
+
+&hsi2c_7 {
+	status = "okay";
+
+	max77802: pmic@9 {
+		compatible = "maxim,max77802";
+		interrupt-parent = <&gpx3>;
+		interrupts = <1 IRQ_TYPE_NONE>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&max77802_irq>;
+		wakeup-source;
+		reg = <0x9>;
+		#clock-cells = <1>;
+
+		regulators {
+			buck1_reg: BUCK1 {
+				regulator-name = "vdd_mif";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <1300000>;
+				regulator-always-on;
+				regulator-boot-on;
+
+				regulator-state-mem {
+					regulator-off-in-suspend;
+				};
+			};
+
+			buck2_reg: BUCK2 {
+				regulator-name = "vdd_arm";
+				regulator-min-microvolt = <800000>;
+				regulator-max-microvolt = <1500000>;
+				regulator-always-on;
+				regulator-boot-on;
+
+				regulator-state-mem {
+					regulator-off-in-suspend;
+				};
+			};
+
+			buck3_reg: BUCK3 {
+				regulator-name = "vdd_int";
+				regulator-min-microvolt = <800000>;
+				regulator-max-microvolt = <1400000>;
+				regulator-always-on;
+				regulator-boot-on;
+
+				regulator-state-mem {
+					regulator-off-in-suspend;
+				};
+			};
+
+			buck4_reg: BUCK4 {
+				regulator-name = "vdd_g3d";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <1400000>;
+				regulator-always-on;
+				regulator-boot-on;
+
+				regulator-state-mem {
+					regulator-off-in-suspend;
+				};
+			};
+
+			buck5_reg: BUCK5 {
+				/* No info doesn't go past populating /dev without it, something with 1.2V */
+				regulator-name = "vdd_buck5";
+				regulator-min-microvolt = <1200000>;
+				regulator-max-microvolt = <1200000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			buck6_reg: BUCK6 {
+				regulator-name = "vdd_kfc";
+				regulator-min-microvolt = <800000>;
+				regulator-max-microvolt = <1500000>;
+				regulator-always-on;
+				regulator-boot-on;
+
+				regulator-state-mem {
+					regulator-off-in-suspend;
+				};
+			};
+
+			buck7_reg: BUCK7 {
+				/* No info doesn't go past populating /dev without it, something with 1.35V */
+				regulator-name = "vdd_buck7";
+				regulator-min-microvolt = <1350000>;
+				regulator-max-microvolt = <1350000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			buck8_reg: BUCK8 {
+				/* Not defined, something with 2.85V */
+				regulator-name = "vdd_buck8";
+				regulator-min-microvolt = <2850000>;
+				regulator-max-microvolt = <2850000>;
+			};
+
+			buck9_reg: BUCK9 {
+				/* No info doesn't go past populating /dev without it, something with 2V */
+				regulator-name = "vdd_buck9";
+				regulator-min-microvolt = <2000000>;
+				regulator-max-microvolt = <2000000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			buck10_reg: BUCK10 {
+				/* Something to do with sdcard, 2.95V */
+				regulator-name = "vdd_buck10";
+				regulator-min-microvolt = <2950000>;
+				regulator-max-microvolt = <2950000>;
+			};
+
+			ldo1_reg: LDO1 {
+				regulator-name = "vdd_alive_1v0";
+				regulator-min-microvolt = <1000000>;
+				regulator-max-microvolt = <1000000>;
+				regulator-always-on;
+			};
+
+			ldo2_reg: LDO2 {
+				regulator-name = "vmem2_1v2_ap";
+				regulator-min-microvolt = <1200000>;
+				regulator-max-microvolt = <1200000>;
+				regulator-always-on;
+			};
+
+			ldo3_reg: LDO3 {
+				regulator-name = "vcc_1v8_ap";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-always-on;
+			};
+
+			ldo4_reg: LDO4 {
+				regulator-name = "vmmc2_2v8_ap";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <2800000>;
+			};
+
+			ldo5_reg: LDO5 {
+				regulator-name = "vhsic_1v8_ap";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-always-on;
+			};
+
+			ldo6_reg: LDO6 {
+				regulator-name = "vxpll_1v8_ap";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-always-on;
+			};
+
+			ldo7_reg: LDO7 {
+				/* Not defined, something with 1.8V */
+				regulator-name = "vdd_ldo7";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+
+			ldo8_reg: LDO8 {
+				regulator-name = "vmipi_1v0_ap";
+				regulator-min-microvolt = <1000000>;
+				regulator-max-microvolt = <1000000>;
+				regulator-always-on;
+			};
+
+			ldo9_reg: LDO9 {
+				regulator-name = "vadc_1v8";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-always-on;
+			};
+
+			ldo10_reg: LDO10 {
+				regulator-name = "vmipi_1v8_ap";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-always-on;
+			};
+
+			ldo11_reg: LDO11 {
+				regulator-name = "vddq_pre_1v8";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-always-on;
+			};
+
+			ldo12_reg: LDO12 {
+				regulator-name = "vuotg_3v0_ap";
+				regulator-min-microvolt = <3000000>;
+				regulator-max-microvolt = <3000000>;
+				regulator-always-on;
+			};
+
+			ldo13_reg: LDO13 {
+				/* No info doesn't boot without it, something with 1.8V */
+				regulator-name = "vdd_ldo13";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-always-on;
+			};
+
+			ldo14_reg: LDO14 {
+				regulator-name = "vabb1_1v8_ap";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-always-on;
+			};
+
+			ldo15_reg: LDO15 {
+				regulator-name = "vhsic_1v0_ap";
+				regulator-min-microvolt = <1000000>;
+				regulator-max-microvolt = <1000000>;
+				regulator-always-on;
+			};
+
+			ldo17_reg: LDO17 {
+				regulator-name = "vg3ds_1v0_ap";
+				regulator-min-microvolt = <1000000>;
+				regulator-max-microvolt = <1000000>;
+				regulator-always-on;
+			};
+
+			ldo18_reg: LDO18 {
+				regulator-name = "cam_isp_sensor_io_1v8";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+
+			ldo19_reg: LDO19 {
+				regulator-name = "vt_cam_1v8";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+
+			ldo20_reg: LDO20 {
+				/* Not defined, something with 1.8V */
+				regulator-name = "vdd_ldo20";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+
+			ldo21_reg: LDO21 {
+				/* Not defined, something with 2.8V */
+				regulator-name = "vdd_ldo21";
+				regulator-min-microvolt = <2800000>;
+				regulator-max-microvolt = <2800000>;
+			};
+
+			ldo23_reg: LDO23 {
+				regulator-name = "key_led_3v3";
+				regulator-min-microvolt = <2500000>;
+				regulator-max-microvolt = <3300000>;
+			};
+
+			ldo24_reg: LDO24 {
+				regulator-name = "cam_af_2v8_pm";
+				regulator-min-microvolt = <2800000>;
+				regulator-max-microvolt = <2800000>;
+			};
+
+			ldo25_reg: LDO25 {
+				regulator-name = "vcc_3v3_mhl";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+			};
+
+			ldo26_reg: LDO26 {
+				regulator-name = "vcc_3v0_motor";
+				regulator-min-microvolt = <3000000>;
+				regulator-max-microvolt = <3000000>;
+			};
+
+			ldo27_reg: LDO27 {
+				regulator-name = "vsil_1a2";
+				regulator-min-microvolt = <1200000>;
+				regulator-max-microvolt = <1200000>;
+			};
+
+			ldo28_reg: LDO28 {
+				regulator-name = "vcc_1v8_mhl";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+
+			ldo29_reg: LDO29 {
+				regulator-name = "tsp_vdd_1v8";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+
+			ldo30_reg: LDO30 {
+				regulator-name = "vmifs_1v0_ap";
+				regulator-min-microvolt = <1000000>;
+				regulator-max-microvolt = <1000000>;
+				regulator-always-on;
+			};
+
+			ldo32_reg: LDO32 {
+				regulator-name = "irled_3v3";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+			};
+
+			ldo33_reg: LDO33 {
+				regulator-name = "vcc_2v8_ap";
+				regulator-min-microvolt = <2800000>;
+				regulator-max-microvolt = <2800000>;
+				regulator-always-on;
+			};
+
+			ldo34_reg: LDO34 {
+				/* Not defined, something with 3V */
+				regulator-name = "vdd_ldo34";
+				regulator-min-microvolt = <3000000>;
+				regulator-max-microvolt = <3000000>;
+			};
+
+			ldo35_reg: LDO35 {
+				regulator-name = "cam_sensor_core_1v2";
+				regulator-min-microvolt = <1050000>;
+				regulator-max-microvolt = <1200000>;
+			};
+		};
+	};
+};
+
+/* Internal storage */
+&mmc_0 {
+	status = "okay";
+	bus-width = <8>;
+	cap-mmc-highspeed;
+	card-detect-delay = <200>;
+	mmc-ddr-1_8v;
+	mmc-hs200-1_8v;
+	non-removable;
+	pinctrl-0 = <&sd0_clk &sd0_cmd &sd0_bus1 &sd0_bus4 &sd0_bus8>;
+	pinctrl-names = "default";
+	samsung,dw-mshc-ciu-div = <3>;
+	samsung,dw-mshc-ddr-timing = <0 2>;
+	samsung,dw-mshc-sdr-timing = <0 4>;
+};
+
+/* WiFi */
+&mmc_1 {
+	status = "okay";
+	non-removable;
+	sd-uhs-ddr50;
+	cap-sd-highspeed;
+	keep-power-in-suspend;
+	bus-width = <4>;
+	card-detect-delay = <0>;
+	samsung,dw-mshc-ciu-div = <1>;
+	samsung,dw-mshc-ddr-timing = <0 2>;
+	samsung,dw-mshc-sdr-timing = <0 1>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&sd1_clk>, <&sd1_cmd>, <&sd1_bus1>, <&sd1_bus4>, <&wifi_en>;
+	mmc-pwrseq = <&mmc1_pwrseq>;
+	vqmmc-supply = <&ldo3_reg>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	wifi@1 {
+		compatible = "brcm,bcm4339-fmac", "brcm,bcm4329-fmac";
+		reg = <1>;
+		interrupt-parent = <&gpx2>;
+		interrupts = <0 IRQ_TYPE_EDGE_FALLING>;
+		interrupt-names = "host-wake";
+		pinctrl-names = "default";
+		pinctrl-0 = <&wlan_irq>;
+	};
+};
+
+/* External sdcard */
+&mmc_2 {
+	status = "okay";
+	bus-width = <4>;
+	cap-sd-highspeed;
+	card-detect-delay = <200>;
+	cd-gpios = <&gpx2 4 GPIO_ACTIVE_LOW>;
+	pinctrl-0 = <&sd2_clk &sd2_cmd &mmc2_cd &sd2_bus1 &sd2_bus4>;
+	pinctrl-names = "default";
+	samsung,dw-mshc-ciu-div = <3>;
+	samsung,dw-mshc-ddr-timing = <0 2>;
+	samsung,dw-mshc-sdr-timing = <0 4>;
+	sd-uhs-sdr50;
+	vmmc-supply = <&buck10_reg>;
+	vqmmc-supply = <&ldo4_reg>;
+};
+
+&serial_0 {
+	uart-has-rtscts;
+	pinctrl-0 = <&uart0_data &uart0_fctl>;
+	pinctrl-names = "default";
+
+	bluetooth {
+		compatible = "brcm,bcm4335a0";
+		pinctrl-0 = <&bt_en &bt_wake &bt_host_wakeup>;
+		pinctrl-names = "default";
+
+		shutdown-gpios = <&gpg0 7 GPIO_ACTIVE_HIGH>;
+		device-wakeup-gpios = <&gpx3 2 GPIO_ACTIVE_HIGH>;
+
+		interrupt-parent = <&gpx2>;
+		interrupts = <1 IRQ_TYPE_EDGE_FALLING>;
+		interrupt-names = "host-wakeup";
+
+		clocks = <&max77802 MAX77802_CLK_32K_CP>;
+		clock-names = "lpo";
+
+		vddio-supply = <&ldo3_reg>;
+	};
+};
+
+&pinctrl_0 {
+	wifi_en: wifi-en-pins {
+		samsung,pins = "gpy7-7";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV1>;
+	};
+
+	fuel_alert_irq: fuel-alert-irq-pins {
+		samsung,pins = "gpx1-5";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_INPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+	};
+
+	wlan_irq: wlan-irq-pins {
+		samsung,pins = "gpx2-0";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_F>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_DOWN>;
+	};
+
+	bt_host_wakeup: bt-host-wakeup-pins {
+		samsung,pins = "gpx2-1";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_INPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+	};
+
+	mmc2_cd: mmc2-cd-pins {
+		samsung,pins = "gpx2-4";
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+	};
+
+	max77802_irq: max77802-irq-pins {
+		samsung,pins = "gpx3-0";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_F>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_UP>;
+		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV1>;
+	};
+
+	bt_wake: bt-wake-pins {
+		samsung,pins = "gpx3-2";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
+		samsung,pin-pud-pdn = <EXYNOS_PIN_PULL_NONE>;
+		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV1>;
+	};
+};
+
+&pinctrl_2 {
+	bt_en: bt-en-pins {
+		samsung,pins = "gpg0-7";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+	};
+};
+
+&pinctrl_3 {
+	i2c18_gpio_bus: i2c18-gpio-bus-pins {
+		samsung,pins = "gpb0-3", "gpb0-4";
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV1>;
+	};
+};
+
+&rtc {
+	status = "okay";
+	clocks = <&clock CLK_RTC>, <&max77802 MAX77802_CLK_32K_AP>;
+	clock-names = "rtc", "rtc_src";
+};
+
+&tmu_cpu0 {
+	vtmu-supply = <&ldo11_reg>;
+};
+
+&tmu_cpu1 {
+	vtmu-supply = <&ldo11_reg>;
+};
+
+&tmu_cpu2 {
+	vtmu-supply = <&ldo11_reg>;
+};
+
+&tmu_cpu3 {
+	vtmu-supply = <&ldo11_reg>;
+};
+
+&tmu_gpu {
+	vtmu-supply = <&ldo11_reg>;
+};
+
+&usbdrd_dwc3_0 {
+	dr_mode = "peripheral";
+};
+
+&usbdrd_dwc3_1 {
+	dr_mode = "peripheral";
+};
+
+&usbdrd3_0 {
+	vdd33-supply = <&ldo12_reg>;
+	vdd10-supply = <&ldo15_reg>;
+};
+
+&usbdrd3_1 {
+	vdd33-supply = <&ldo12_reg>;
+	vdd10-supply = <&ldo15_reg>;
+};
