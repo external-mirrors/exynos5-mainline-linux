@@ -288,6 +288,8 @@ properties:
       - rocktech,rk043fn48h
         # Samsung 13.3" FHD (1920x1080 pixels) eDP AMOLED panel
       - samsung,atna33xc20
+        # Samsung 10.1" WQXGA (2560x1600) TFT LCD panel
+      - samsung,lsl101dl01
         # Samsung 12.2" (2560x1600 pixels) TFT LCD panel
       - samsung,lsn122dl01-c01
         # Samsung Electronics 10.1" WXGA (1280x800) TFT LCD panel
