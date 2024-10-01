@@ -83,6 +83,19 @@
 		};
 	};
 
+	panel {
+		compatible = "samsung,lsl101dl01";
+
+		backlight = <&backlight>;
+		power-supply = <&lcd_supply>;
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&dp_out>;
+			};
+		};
+	};
+
 	mmc1_pwrseq: pwrseq {
 		compatible = "mmc-pwrseq-simple";
 		reset-gpios = <&gpy7 7 GPIO_ACTIVE_LOW>;
@@ -113,6 +126,25 @@
 			maxim,over-volt = <4300>;
 		};
 	};
+
+	backlight_reset_supply: backlight-reset-supply {
+		compatible = "regulator-fixed";
+		regulator-name = "BACKLIGHT_RESET_SUPPLY";
+		pinctrl-names = "default";
+		pinctrl-0 = <&backlight_reset>;
+		gpio = <&gpg1 1 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		vin-supply = <&lcd_supply>;	/* Pulls i2c pins down if not enabled */
+	};
+
+	lcd_supply: lcd-supply {
+		compatible = "regulator-fixed";
+		regulator-name = "LCD_SUPPLY";
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_en>;
+		gpio = <&gpg1 2 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+	};
 };
 
 &cci {
@@ -126,6 +158,88 @@
 
 &cpu4 {
 	cpu-supply = <&buck6_reg>;
+};
+
+&dp {
+	status = "okay";
+	samsung,link-rate = <0x0a>;
+	samsung,lane-count = <4>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&dp_hpd>;
+	hpd-gpios = <&gpx0 7 GPIO_ACTIVE_HIGH>;
+
+	ports {
+		port {
+			dp_out: endpoint {
+				remote-endpoint = <&panel_in>;
+			};
+		};
+	};
+};
+
+&fimd {
+	status = "okay";
+	assigned-clocks = <&clock CLK_MOUT_VPLL>;
+	assigned-clock-parents = <&clock CLK_MOUT_VPLL>;
+};
+
+&hsi2c_5 {
+	status = "okay";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	backlight: backlight@2c {
+		compatible = "ti,lp8556";
+		reg = <0x2c>;
+
+		bl-name = "lcd-bl";
+		dev-ctrl = /bits/ 8 <0x01>;
+		init-brt = /bits/ 8 <0x72>;	/* 114 */
+
+		pwms = <&pwm 0 100000 0>;
+		pwm-names = "lp8556";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pwm0_out>;
+
+		enable-supply = <&backlight_reset_supply>;
+
+		/* higher inductor current limit */
+		rom-98h {
+			rom-addr = /bits/ 8 <0x98>;
+			rom-val = /bits/ 8 <0xa1>;
+		};
+
+		/* automatic standby via pwm disabled, 25 mA max LED current */
+		rom-a1h {
+			rom-addr = /bits/ 8 <0xa1>;
+			rom-val = /bits/ 8 <0x5f>;
+		};
+
+		/* 200 ms slope, heavy smoothing, 1-bit PWM input hysteresis */
+		rom-a3h {
+			rom-addr = /bits/ 8 <0xa3>;
+			rom-val = /bits/ 8 <0x5e>;
+		};
+
+		/* disable PWM passthrough, 6 PWM output phases, 9616 Hz PWM frequency */
+		rom-a5h {
+			rom-addr = /bits/ 8 <0xa5>;
+			rom-val = /bits/ 8 <0x04>;
+		};
+
+		/* all reserved */
+		rom-a8h {
+			rom-addr = /bits/ 8 <0xa8>;
+			rom-val = /bits/ 8 <0x00>;
+		};
+
+		/* 24 V max output voltage, jump detection on pwm input disabled */
+		rom-a9h {
+			rom-addr = /bits/ 8 <0xa9>;
+			rom-val = /bits/ 8 <0xa0>;
+		};
+	};
 };
 
 &hsi2c_7 {
@@ -595,6 +709,18 @@
 &pinctrl_2 {
 	bt_en: bt-en-pins {
 		samsung,pins = "gpg0-7";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+	};
+
+	backlight_reset: backlight-reset-pins {
+		samsung,pins = "gpg1-1";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+	};
+
+	lcd_en: lcd-en-pins {
+		samsung,pins = "gpg1-2";
 		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
 		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
 	};
