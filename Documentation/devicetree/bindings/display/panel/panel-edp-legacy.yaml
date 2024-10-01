@@ -64,6 +64,8 @@ properties:
       - lg,lp129qe
         # NewEast Optoelectronics CO., LTD WJFH116008A eDP TFT LCD panel
       - neweast,wjfh116008a
+        # Samsung 10.1" WQXGA (2560x1600) TFT LCD panel
+      - samsung,lsl101dl01
         # Samsung 12.2" (2560x1600 pixels) TFT LCD panel
       - samsung,lsn122dl01-c01
         # Samsung Electronics 14" WXGA (1366x768) TFT LCD panel
