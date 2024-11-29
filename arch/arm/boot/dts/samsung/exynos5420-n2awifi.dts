@@ -183,6 +183,67 @@
 	assigned-clock-parents = <&clock CLK_MOUT_VPLL>;
 };
 
+&gpu {
+	status = "okay";
+	mali-supply = <&buck4_reg>;
+};
+
+&i2c_3 {
+	status = "okay";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	magnetometer@c {
+		compatible = "asahi-kasei,ak8963";
+		reg = <0x0c>;
+		vid-supply = <&ldo3_reg>;
+		vdd-supply = <&ldo33_reg>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&magnetometer_irq &magnetometer_reset>;
+		interrupt-parent = <&gpx3>;
+		interrupts = <3 IRQ_TYPE_EDGE_RISING>;
+		reset-gpios = <&gpg2 0 GPIO_ACTIVE_LOW>;
+		mount-matrix =  "1", "0", "0",
+				"0", "-1", "0",
+				"0", "0", "-1";
+	};
+
+	light-sensor@10 {
+		compatible = "capella,cm3323";
+		reg = <0x10>;
+	};
+
+	accelerometer@18 {
+		compatible = "bosch,bmi055_accel";
+		reg = <0x18>;
+		vddio-supply = <&ldo3_reg>;
+		vdd-supply = <&ldo33_reg>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&accelerometer_irq1 &accelerometer_irq2>;
+		interrupt-parent = <&gpx1>;
+		interrupts = <3 IRQ_TYPE_EDGE_RISING>, <7 IRQ_TYPE_EDGE_RISING>;
+		interrupt-names = "INT1", "INT2";
+		mount-matrix = "0", "-1", "0",
+				"-1", "0", "0",
+				"0", "0", "1";
+	};
+
+	gyroscope@68 {
+		compatible = "bosch,bmi055_gyro";
+		reg = <0x68>;
+		vddio-supply = <&ldo3_reg>;
+		vdd-supply = <&ldo33_reg>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&gyroscope_irq &gyroscope_drdy>;
+		interrupt-parent = <&gpx3>;
+		interrupts = <1 IRQ_TYPE_EDGE_RISING>, <4 IRQ_TYPE_EDGE_RISING>;
+		mount-matrix = "0", "-1", "0",
+				"-1", "0", "0",
+				"0", "0", "1";
+	};
+};
+
 &hsi2c_5 {
 	status = "okay";
 
@@ -245,10 +306,13 @@
 &hsi2c_7 {
 	status = "okay";
 
+	#address-cells = <1>;
+	#size-cells = <0>;
+
 	max77802: pmic@9 {
 		compatible = "maxim,max77802";
 		interrupt-parent = <&gpx3>;
-		interrupts = <1 IRQ_TYPE_NONE>;
+		interrupts = <0 IRQ_TYPE_NONE>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&max77802_irq>;
 		wakeup-source;
@@ -381,7 +445,7 @@
 			ldo4_reg: LDO4 {
 				regulator-name = "vmmc2_2v8_ap";
 				regulator-min-microvolt = <1800000>;
-				regulator-max-microvolt = <2800000>;
+				regulator-max-microvolt = <2900000>;
 			};
 
 			ldo5_reg: LDO5 {
@@ -668,10 +732,22 @@
 		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV1>;
 	};
 
+	accelerometer_irq1: accelerometer-irq1-pins {
+		samsung,pins = "gpx1-3";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_INPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_DOWN>;
+	};
+
 	fuel_alert_irq: fuel-alert-irq-pins {
 		samsung,pins = "gpx1-5";
 		samsung,pin-function = <EXYNOS_PIN_FUNC_INPUT>;
 		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+	};
+
+	accelerometer_irq2: accelerometer-irq2-pins {
+		samsung,pins = "gpx1-7";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_INPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_DOWN>;
 	};
 
 	wlan_irq: wlan-irq-pins {
@@ -698,11 +774,29 @@
 		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV1>;
 	};
 
+	gyroscope_irq: gyroscope-irq-pins {
+		samsung,pins = "gpx3-1";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_INPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_DOWN>;
+	};
+
 	bt_wake: bt-wake-pins {
 		samsung,pins = "gpx3-2";
 		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
 		samsung,pin-pud-pdn = <EXYNOS_PIN_PULL_NONE>;
 		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV1>;
+	};
+
+	magnetometer_irq: magnetometer-irq-pins {
+		samsung,pins = "gpx3-3";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_INPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+	};
+
+	gyroscope_drdy: gyroscope-drdy-pins {
+		samsung,pins = "gpx3-4";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_INPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_DOWN>;
 	};
 };
 
@@ -724,6 +818,12 @@
 		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
 		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
 	};
+
+	magnetometer_reset: magnetometer-reset-pins {
+		samsung,pins = "gpg2-0";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+	};
 };
 
 &pinctrl_3 {
@@ -735,7 +835,7 @@
 };
 
 &rtc {
-	status = "okay";
+	status = "disabled";	// s3c-rtc only works sometimes, max77802-rtc is used
 	clocks = <&clock CLK_RTC>, <&max77802 MAX77802_CLK_32K_AP>;
 	clock-names = "rtc", "rtc_src";
 };
