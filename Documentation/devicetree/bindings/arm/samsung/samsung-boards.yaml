@@ -155,6 +155,7 @@ properties:
               - samsung,klimt-lte               # Samsung SM-T705
               - samsung,n2awifi                 # Samsung SM-T520
               - samsung,smdk5420                # Samsung SMDK5420 eval
+              - samsung,v1a-wifi                # Samsung SM-P900
           - const: samsung,exynos5420
           - const: samsung,exynos5
 
