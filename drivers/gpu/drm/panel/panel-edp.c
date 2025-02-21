@@ -1547,6 +1547,32 @@ static const struct panel_desc samsung_lsl101dl01 = {
 	},
 };
 
+static const struct drm_display_mode samsung_lsl122dl01_mode = {
+	.clock = 266000,
+	.hdisplay = 2560,
+	.hsync_start = 2560 + 62,
+	.hsync_end = 2560 + 62 + 22,
+	.htotal = 2560 + 62 + 22 + 70,
+	.vdisplay = 1600,
+	.vsync_start = 1600 + 6,
+	.vsync_end = 1600 + 6 + 6,
+	.vtotal = 1600 + 6 + 6 + 21,
+};
+
+static const struct panel_desc samsung_lsl122dl01 = {
+	.modes = &samsung_lsl122dl01_mode,
+	.num_modes = 1,
+	.bpc = 8,
+	.size = {
+		.width = 262,
+		.height = 164,
+	},
+	.delay = {
+		.hpd_absent = 350,
+		.unprepare = 500,
+	},
+};
+
 static const struct drm_display_mode samsung_lsn122dl01_c01_mode = {
 	.clock = 271560,
 	.hdisplay = 2560,
@@ -1750,6 +1776,9 @@ static const struct of_device_id platform_of_match[] = {
 	}, {
 		.compatible = "samsung,lsl101dl01",
 		.data = &samsung_lsl101dl01,
+	}, {
+		.compatible = "samsung,lsl122dl01",
+		.data = &samsung_lsl122dl01,
 	}, {
 		.compatible = "samsung,lsn122dl01-c01",
 		.data = &samsung_lsn122dl01_c01,
