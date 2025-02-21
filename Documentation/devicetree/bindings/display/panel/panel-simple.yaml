@@ -290,6 +290,8 @@ properties:
       - samsung,atna33xc20
         # Samsung 10.1" WQXGA (2560x1600) TFT LCD panel
       - samsung,lsl101dl01
+        # Samsung 12.2" WQXGA (2560x1600) TFT LCD panel
+      - samsung,lsl122dl01
         # Samsung 12.2" (2560x1600 pixels) TFT LCD panel
       - samsung,lsn122dl01-c01
         # Samsung Electronics 10.1" WXGA (1280x800) TFT LCD panel
