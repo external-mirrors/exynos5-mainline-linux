@@ -178,10 +178,8 @@ static void exynos5250_isol(struct samsung_usb2_phy_instance *inst, bool on)
 	u32 mask = EXYNOS_5250_USB_ISOL_ENABLE;
 
 	if (drv->cfg == &exynos5250_usb2_phy_config &&
-	    inst->cfg->id == EXYNOS5250_DEVICE)
-		offset = EXYNOS_5250_USB_ISOL_OTG_OFFSET;
-	else if (drv->cfg == &exynos5250_usb2_phy_config &&
-		 inst->cfg->id == EXYNOS5250_HOST)
+		 (inst->cfg->id == EXYNOS5250_HOST ||
+		  inst->cfg->id == EXYNOS5250_DEVICE))
 		offset = EXYNOS_5250_USB_ISOL_HOST_OFFSET;
 	else if (drv->cfg == &exynos5420_usb2_phy_config &&
 		 inst->cfg->id == EXYNOS5250_HOST)
@@ -233,6 +231,24 @@ static int exynos5250_power_on(struct samsung_usb2_phy_instance *inst)
 			EXYNOS_5250_USBOTGSYS_OTGDISABLE);
 		writel(otg, drv->reg_phy + EXYNOS_5250_USBOTGSYS);
 
+		/* Reset */
+		ctrl0 &=	~(EXYNOS_5250_HOSTPHYCTRL0_PHYSWRST |
+				EXYNOS_5250_HOSTPHYCTRL0_PHYSWRSTALL |
+				EXYNOS_5250_HOSTPHYCTRL0_SIDDQ |
+				EXYNOS_5250_HOSTPHYCTRL0_FORCESUSPEND |
+				EXYNOS_5250_HOSTPHYCTRL0_FORCESLEEP);
+		ctrl0 |=	EXYNOS_5250_HOSTPHYCTRL0_LINKSWRST |
+				EXYNOS_5250_HOSTPHYCTRL0_UTMISWRST |
+				EXYNOS_5250_HOSTPHYCTRL0_COMMON_ON_N;
+		writel(ctrl0, drv->reg_phy + EXYNOS_5250_HOSTPHYCTRL0);
+		udelay(10);
+		ctrl0 &=	~(EXYNOS_5250_HOSTPHYCTRL0_LINKSWRST |
+				EXYNOS_5250_HOSTPHYCTRL0_UTMISWRST);
+		writel(ctrl0, drv->reg_phy + EXYNOS_5250_HOSTPHYCTRL0);
+
+		/* The following delay is necessary for the reset sequence to be
+		* completed */
+		udelay(80);
 
 		break;
 	case EXYNOS5250_HOST:
