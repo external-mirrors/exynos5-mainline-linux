@@ -3600,8 +3600,11 @@ void dwc2_hsotg_core_disconnect(struct dwc2_hsotg *hsotg)
 void dwc2_hsotg_core_connect(struct dwc2_hsotg *hsotg)
 {
 	/* remove the soft-disconnect and let's go */
-	if (!hsotg->role_sw || (dwc2_readl(hsotg, GOTGCTL) & GOTGCTL_BSESVLD))
+	if (!hsotg->role_sw || (dwc2_readl(hsotg, GOTGCTL) & GOTGCTL_BSESVLD)) {
+		if (hsotg->pullup_delay_ms)
+			mdelay(hsotg->pullup_delay_ms);
 		dwc2_clear_bit(hsotg, DCTL, DCTL_SFTDISCON);
+	}
 }
 
 /**
