@@ -494,6 +494,10 @@ static int dwc2_driver_probe(struct platform_device *dev)
 		of_property_read_bool(dev->dev.of_node,
 				      "snps,need-phy-for-wake");
 
+	of_property_read_u32(dev->dev.of_node,
+			      "pullup-delay-ms",
+			      &hsotg->pullup_delay_ms);
+
 	/*
 	 * Before performing any core related operations
 	 * check core version.

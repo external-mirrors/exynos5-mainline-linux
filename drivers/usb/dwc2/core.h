@@ -1081,6 +1081,7 @@ struct dwc2_hsotg {
 	struct regulator_bulk_data supplies[DWC2_NUM_SUPPLIES];
 	struct regulator *vbus_supply;
 	struct regulator *usb33d;
+	u32 pullup_delay_ms;
 
 	spinlock_t lock;
 	void *priv;
