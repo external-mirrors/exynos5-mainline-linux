@@ -172,6 +172,11 @@ properties:
 
   tpl-support: true
 
+  pullup-delay-ms:
+    description:
+      Delay in ms after before enabling the D+ pull-up resistor. Useful for
+      allowing a third-party IC to negociate charging speeds.
+
 dependencies:
   port: [ usb-role-switch ]
   role-switch-default-mode: [ usb-role-switch ]
