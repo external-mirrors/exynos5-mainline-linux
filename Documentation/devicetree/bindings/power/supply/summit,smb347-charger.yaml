@@ -45,6 +45,10 @@ properties:
       - 1 # SMB3XX_CHG_ENABLE_PIN_ACTIVE_LOW Pin control (Active Low)
       - 2 # SMB3XX_CHG_ENABLE_PIN_ACTIVE_HIGH Pin control (Active High)
 
+  summit,enable-apsd:
+    type: boolean
+    description: Enable automatic power source detection for USB.
+
   summit,fast-voltage-threshold-microvolt:
     description: Voltage threshold to transit to fast charge mode (in uV)
     minimum: 2400000
