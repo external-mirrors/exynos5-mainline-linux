@@ -43,6 +43,8 @@
 #define CFG_CURRENT_LIMIT_DC_MASK		0xf0
 #define CFG_CURRENT_LIMIT_DC_SHIFT		4
 #define CFG_CURRENT_LIMIT_USB_MASK		0x0f
+#define CFG_VARIOUS_FUNCTION                    0x02
+#define CFG_VARIOUS_FUNCTION_AICL               BIT(4)
 #define CFG_FLOAT_VOLTAGE			0x03
 #define CFG_FLOAT_VOLTAGE_FLOAT_MASK		0x3f
 #define CFG_FLOAT_VOLTAGE_THRESHOLD_MASK	0xc0
@@ -190,6 +192,7 @@
  * @inok_polarity: polarity of INOK signal which denotes presence of external
  *		   power supply
  * @apsd: Automatic Power Supply Detection is enabled
+ * @aicl: Automatic Input Current Limit is enabled.
  *
  * @use_main, @use_usb, and @use_usb_otg are means to enable/disable
  * hardware support for these. This is useful when we want to have for
@@ -240,6 +243,7 @@ struct smb347_charger {
 	unsigned int		enable_control;
 	unsigned int		inok_polarity;
 	bool			apsd;
+	bool			aicl;
 };
 
 enum smb_charger_chipid {
@@ -814,6 +818,16 @@ static int smb347_hw_init(struct smb347_charger *smb)
 	if (ret < 0)
 		goto fail;
 
+	/*
+	 * If configured by platform data, we enable AICL to determine current
+	 * limit. Otherwise we disable it.
+	 */
+	ret = regmap_update_bits(smb->regmap, CFG_VARIOUS_FUNCTION,
+				 CFG_VARIOUS_FUNCTION_AICL,
+				 smb->aicl ? CFG_VARIOUS_FUNCTION_AICL : 0);
+	if (ret < 0)
+		goto fail;
+
 	ret = smb347_update_ps_status(smb);
 	if (ret < 0)
 		goto fail;
@@ -1308,6 +1322,7 @@ static bool smb347_readable_reg(struct device *dev, unsigned int reg)
 {
 	switch (reg) {
 	case CFG_CHARGE_CURRENT:
+	case CFG_VARIOUS_FUNCTION:
 	case CFG_CURRENT_LIMIT:
 	case CFG_FLOAT_VOLTAGE:
 	case CFG_CHARGE_CONTROL:
@@ -1380,6 +1395,8 @@ static void smb347_dt_parse_dev_info(struct smb347_charger *smb)
 	/* Automatic power source detection */
 	smb->apsd = device_property_read_bool(dev, "summit,enable-apsd");
 
+	/* Automatic input current limit */
+	smb->aicl = device_property_read_bool(dev, "summit,enable-aicl");
 }
 
 static int smb347_get_battery_info(struct smb347_charger *smb)
