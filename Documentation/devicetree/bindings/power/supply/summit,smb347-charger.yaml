@@ -49,6 +49,10 @@ properties:
     type: boolean
     description: Enable automatic power source detection for USB.
 
+  summit,enable-aicl:
+    type: boolean
+    description: Enable automatic input current limit.
+
   summit,fast-voltage-threshold-microvolt:
     description: Voltage threshold to transit to fast charge mode (in uV)
     minimum: 2400000
