@@ -27,6 +27,7 @@ snd-soc-arndale-y := arndale.o
 snd-soc-tm2-wm5110-y := tm2_wm5110.o
 snd-soc-aries-wm8994-y := aries_wm8994.o
 snd-soc-midas-wm1811-y := midas_wm1811.o
+snd-soc-nexus10-manta-wm1811-y := nexus10_manta_wm1811.o
 
 obj-$(CONFIG_SND_SOC_SAMSUNG_SMDK_WM8994) += snd-soc-smdk-wm8994.o
 obj-$(CONFIG_SND_SOC_SNOW) += snd-soc-snow.o
@@ -42,3 +43,4 @@ obj-$(CONFIG_SND_SOC_ARNDALE) += snd-soc-arndale.o
 obj-$(CONFIG_SND_SOC_SAMSUNG_TM2_WM5110) += snd-soc-tm2-wm5110.o
 obj-$(CONFIG_SND_SOC_SAMSUNG_ARIES_WM8994) += snd-soc-aries-wm8994.o
 obj-$(CONFIG_SND_SOC_SAMSUNG_MIDAS_WM1811) += snd-soc-midas-wm1811.o
+obj-$(CONFIG_SND_SOC_SAMSUNG_NEXUS10_MANTA_WM1811) += snd-soc-nexus10-manta-wm1811.o
