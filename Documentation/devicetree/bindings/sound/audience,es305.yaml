@@ -1,0 +1,69 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/sound/audience,es305.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: Audience ES305 Voice Processor
+
+maintainers:
+  - Alexandre Marquet <tb@a-marquet.fr>
+
+properties:
+  compatible:
+    const: audience,es305
+
+  reg:
+    maxItems: 1
+
+  clocks:
+    maxItems: 1
+    description: Master clock.
+
+  clock-names:
+    items:
+      - const: MCLK
+
+  '#clock-cells':
+    const: 1
+
+  reset-gpios:
+    maxItems: 1
+    description: Active high reset GPIO.
+
+  device-wakeup-gpios:
+    maxItems: 1
+    description: Active high wake up GPIO.
+
+required:
+  - compatible
+  - reg
+  - clocks
+  - clock-names
+  - reset-gpios
+  - device-wakeup-gpios
+
+additionalProperties: false
+
+examples:
+  - |
+    #include <dt-bindings/gpio/gpio.h>
+
+    i2c {
+        #address-cells = <1>;
+        #size-cells = <0>;
+
+        audio-codec@3e {
+            compatible = "audience,es305";
+            reg = <0x3e>;
+
+            #clock-cells = <1>;
+            clocks = <&es305_clock>;
+            clock-names = "MCLK";
+
+            reset-gpios = <&gpg0 4 GPIO_ACTIVE_HIGH>;
+            device-wakeup-gpios = <&gpg0 3 GPIO_ACTIVE_HIGH>;
+            pinctrl-0 = <&es305_reset &es305_wake>;
+            pinctrl-names = "default";
+        };
+    };
