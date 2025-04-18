@@ -191,6 +191,8 @@ patternProperties:
     description: Atlas Scientific LLC
   "^atmel,.*":
     description: Atmel Corporation
+  "^audience,.*":
+    description: Audience, Inc.
   "^auo,.*":
     description: AU Optronics Corporation
   "^auvidea,.*":
