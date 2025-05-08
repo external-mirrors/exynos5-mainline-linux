@@ -1,4 +1,5 @@
 /dts-v1/;
+#include <dt-bindings/leds/common.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/clock/maxim,max77686.h>
 #include <dt-bindings/input/linux-event-codes.h>
@@ -124,6 +125,13 @@
 			linux,code = <0>; /* SW_LID */
 			debounce-interval = <10>;
 			wakeup-source;
+		};
+
+		multi-led {
+			compatible = "leds-group-multicolor";
+			color = <LED_COLOR_ID_RGB>;
+			function = LED_FUNCTION_STATUS;
+			leds = <&status_red>, <&status_green>, <&status_blue>, <&status_white>;
 		};
 	};
 
@@ -328,6 +336,37 @@
 						"0",  "1",  "0",
 						"0",  "0", "-1";
 			};
+		};
+	};
+
+	led-controller@42 {
+		compatible = "ams,as3668";
+		reg = <0x42>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		status_red: led@0 {
+			reg = <0x0>;
+			function = LED_FUNCTION_STATUS;
+			color = <LED_COLOR_ID_RED>;
+		};
+
+		status_green: led@1 {
+			reg = <0x1>;
+			function = LED_FUNCTION_STATUS;
+			color = <LED_COLOR_ID_GREEN>;
+		};
+
+		status_blue: led@2 {
+			reg = <0x2>;
+			function = LED_FUNCTION_STATUS;
+			color = <LED_COLOR_ID_BLUE>;
+		};
+
+		status_white: led@3 {
+			reg = <0x3>;
+			function = LED_FUNCTION_STATUS;
+			color = <LED_COLOR_ID_WHITE>;
 		};
 	};
 };
