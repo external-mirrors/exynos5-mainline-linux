@@ -140,64 +140,214 @@
 		startup-delay-us = <20000>;
 		off-on-delay-us = <500000>;
 	};
+
+	dmc_opp_table: opp-table-2 {
+		compatible = "operating-points-v2";
+
+		opp-667000000 {
+			opp-hz = /bits/ 64 <667000000>;
+			opp-microvolt = <1012500>;
+		};
+		opp-533000000 {
+			opp-hz = /bits/ 64 <533000000>;
+			opp-microvolt = <937500>;
+		};
+		opp-400000000 {
+			opp-hz = /bits/ 64 <400000000>;
+			opp-microvolt = <887500>;
+		};
+		opp-266000000 {
+			opp-hz = /bits/ 64 <266000000>;
+			opp-microvolt = <875000>;
+		};
+		opp-200000000 {
+			opp-hz = /bits/ 64 <200000000>;
+			opp-microvolt = <875000>;
+		};
+		opp-160000000 {
+			opp-hz = /bits/ 64 <160000000>;
+			opp-microvolt = <875000>;
+		};
+	};
+
+
+	samsung_K3QF2F20DB: lpddr3 {
+		compatible	= "samsung,K3QF2F20DB", "jedec,lpddr3";
+		density		= <16384>;
+		io-width	= <32>;
+
+		tRFC-min-tck		= <17>;
+		tRRD-min-tck		= <2>;
+		tRPab-min-tck		= <2>;
+		tRPpb-min-tck		= <2>;
+		tRCD-min-tck		= <2>;
+		tRC-min-tck			= <5>;
+		tRAS-min-tck		= <4>;
+		tWTR-min-tck		= <2>;
+		tWR-min-tck			= <6>;
+		tRTP-min-tck		= <2>;
+		tW2W-C2C-min-tck	= <0>;
+		tR2R-C2C-min-tck	= <0>;
+		tWL-min-tck			= <6>;
+		tDQSCK-min-tck		= <5>;
+		tRL-min-tck			= <12>;
+		tFAW-min-tck		= <4>;
+		tXSR-min-tck		= <12>;
+		tXP-min-tck			= <2>;
+		tCKE-min-tck		= <2>;
+		tCKESR-min-tck		= <2>;
+		tMRD-min-tck		= <5>;
+
+		timings-0 {
+			compatible	= "jedec,lpddr3-timings";
+			max-freq	= <667000000>;
+			min-freq	= <667000000>;
+			tRFC		= <65967>;
+			tRRD		= <5997>;
+			tRPab		= <11994>;
+			tRPpb		= <11994>;
+			tRCD		= <11994>;
+			tRC			= <34483>;
+			tRAS		= <23988>;
+			tWTR		= <4498>;
+			tWR			= <8996>;
+			tRTP		= <4498>;
+			tW2W-C2C	= <0>;
+			tR2R-C2C	= <0>;
+			tFAW		= <25488>;
+			tXSR		= <70465>;
+			tXP			= <4498>;
+			tCKE		= <4498>;
+			tCKESR		= <4498>;
+			tMRD		= <7497>;
+		};
+
+		timings-1 {
+			compatible	= "jedec,lpddr3-timings";
+			max-freq	= <533000000>;
+			min-freq	= <533000000>;
+			tRFC		= <65666>;
+			tRRD		= <7505>;
+			tRPab		= <13134>;
+			tRPpb		= <13134>;
+			tRCD		= <11257>;
+			tRC			= <33772>;
+			tRAS		= <24391>;
+			tWTR		= <3753>;
+			tWR			= <11257>;
+			tRTP		= <3753>;
+			tW2W-C2C	= <0>;
+			tR2R-C2C	= <0>;
+			tFAW		= <25267>;
+			tXSR		= <71295>;
+			tXP			= <3753>;
+			tCKE		= <3753>;
+			tCKESR		= <3753>;
+			tMRD		= <9381>;
+		};
+
+		timings-2 {
+			compatible	= "jedec,lpddr3-timings";
+			max-freq	= <400000000>;
+			min-freq	= <400000000>;
+			tRFC		= <65000>;
+			tRRD		= <7500>;
+			tRPab		= <12500>;
+			tRPpb		= <12500>;
+			tRCD		= <12500>;
+			tRC			= <35000>;
+			tRAS		= <25000>;
+			tWTR		= <5000>;
+			tWR			= <15000>;
+			tRTP		= <5000>;
+			tW2W-C2C	= <0>;
+			tR2R-C2C	= <0>;
+			tFAW		= <25000>;
+			tXSR		= <70000>;
+			tXP			= <5000>;
+			tCKE		= <5000>;
+			tCKESR		= <5000>;
+			tMRD		= <12500>;
+		};
+
+		timings-3 {
+			compatible	= "jedec,lpddr3-timings";
+			max-freq	= <266000000>;
+			min-freq	= <266000000>;
+			tRFC		= <67670>;
+			tRRD		= <7519>;
+			tRPab		= <15038>;
+			tRPpb		= <15038>;
+			tRCD		= <15038>;
+			tRC			= <33835>;
+			tRAS		= <26316>;
+			tWTR		= <7519>;
+			tWR			= <22557>;
+			tRTP		= <7519>;
+			tW2W-C2C	= <0>;
+			tR2R-C2C	= <0>;
+			tFAW		= <26316>;
+			tXSR		= <71429>;
+			tXP			= <7519>;
+			tCKE		= <7519>;
+			tCKESR		= <7519>;
+			tMRD		= <18797>;
+		};
+
+		timings-4 {
+			compatible	= "jedec,lpddr3-timings";
+			max-freq	= <200000000>;
+			min-freq	= <200000000>;
+			tRFC		= <85000>;
+			tRRD		= <10000>;
+			tRPab		= <15000>;
+			tRPpb		= <15000>;
+			tRCD		= <15000>;
+			tRC			= <35000>;
+			tRAS		= <25000>;
+			tWTR		= <10000>;
+			tWR			= <30000>;
+			tRTP		= <10000>;
+			tW2W-C2C	= <0>;
+			tR2R-C2C	= <0>;
+			tFAW		= <25000>;
+			tXSR		= <70000>;
+			tXP			= <10000>;
+			tCKE		= <10000>;
+			tCKESR		= <10000>;
+			tMRD		= <25000>;
+		};
+
+		timings-5 {
+			compatible	= "jedec,lpddr3-timings";
+			max-freq	= <160000000>;
+			min-freq	= <160000000>;
+			tRFC		= <106250>;
+			tRRD		= <12500>;
+			tRPab		= <12500>;
+			tRPpb		= <12500>;
+			tRCD		= <18750>;
+			tRC			= <37500>;
+			tRAS		= <31250>;
+			tWTR		= <12500>;
+			tWR			= <37500>;
+			tRTP		= <12500>;
+			tW2W-C2C	= <0>;
+			tR2R-C2C	= <0>;
+			tFAW		= <25000>;
+			tXSR		= <70000>;
+			tXP			= <12500>;
+			tCKE		= <12500>;
+			tCKESR		= <12500>;
+			tMRD		= <31250>;
+		};
+	};
+
 };
 
 &cci {
 	/* CCI is disabled in hardware */
 	status = "disabled";
-};
-
-&cluster_a15_opp_table {
-	opp-1800000000 {
-		opp-hz = /bits/ 64 <1800000000>;
-		opp-microvolt = <1225000 1225000 1500000>;
-		clock-latency-ns = <140000>;
-	};
-	opp-1700000000 {
-		opp-hz = /bits/ 64 <1700000000>;
-		opp-microvolt = <1187500 1187500 1500000>;
-		clock-latency-ns = <140000>;
-	};
-	opp-1600000000 {
-		opp-hz = /bits/ 64 <1600000000>;
-		opp-microvolt = <1150000 1150000 1500000>;
-		clock-latency-ns = <140000>;
-	};
-	opp-1500000000 {
-		opp-hz = /bits/ 64 <1500000000>;
-		opp-microvolt = <1112500 1112500 1500000>;
-		clock-latency-ns = <140000>;
-	};
-	opp-1400000000 {
-		opp-hz = /bits/ 64 <1400000000>;
-		opp-microvolt = <1087500 1087500 1500000>;
-		clock-latency-ns = <140000>;
-	};
-	opp-600000000 {
-		opp-hz = /bits/ 64 <600000000>;
-		opp-microvolt = <900000 900000 1500000>;
-		clock-latency-ns = <140000>;
-	};
-	opp-500000000 {
-		opp-hz = /bits/ 64 <500000000>;
-		opp-microvolt = <900000 900000 1500000>;
-		clock-latency-ns = <140000>;
-	};
-	opp-400000000 {
-		opp-hz = /bits/ 64 <400000000>;
-		opp-microvolt = <900000 900000 1500000>;
-		clock-latency-ns = <140000>;
-	};
-	opp-300000000 {
-		opp-hz = /bits/ 64 <300000000>;
-		opp-microvolt = <900000 900000 1500000>;
-		clock-latency-ns = <140000>;
-	};
-	opp-200000000 {
-		opp-hz = /bits/ 64 <200000000>;
-		opp-microvolt = <900000 900000 1500000>;
-		clock-latency-ns = <140000>;
-	};
 };
 
 &cpu0 {
@@ -256,15 +406,15 @@
 		};
 
 		/*
-		 * Reduce the CPU speed as much as possible, down to 200 MHz
-		 * (16 steps).
+		 * Reduce the CPU speed as much as possible, down to 700 MHz
+		 * (11 steps).
 		 */
 		map2 {
 			trip = <&cpu0_alert2>;
-			cooling-device = <&cpu0 16 16>,
-					 <&cpu1 16 16>,
-					 <&cpu2 16 16>,
-					 <&cpu3 16 16>;
+			cooling-device = <&cpu0 11 11>,
+					 <&cpu1 11 11>,
+					 <&cpu2 11 11>,
+					 <&cpu3 11 11>;
 		};
 	};
 };
@@ -312,10 +462,10 @@
 
 		map2 {
 			trip = <&cpu1_alert2>;
-			cooling-device = <&cpu0 16 16>,
-					 <&cpu1 16 16>,
-					 <&cpu2 16 16>,
-					 <&cpu3 16 16>;
+			cooling-device = <&cpu0 11 11>,
+					 <&cpu1 11 11>,
+					 <&cpu2 11 11>,
+					 <&cpu3 11 11>;
 		};
 	};
 };
@@ -363,10 +513,10 @@
 
 		map2 {
 			trip = <&cpu2_alert2>;
-			cooling-device = <&cpu0 16 16>,
-					 <&cpu1 16 16>,
-					 <&cpu2 16 16>,
-					 <&cpu3 16 16>;
+			cooling-device = <&cpu0 11 11>,
+					 <&cpu1 11 11>,
+					 <&cpu2 11 11>,
+					 <&cpu3 11 11>;
 		};
 	};
 };
@@ -414,12 +564,21 @@
 
 		map2 {
 			trip = <&cpu3_alert2>;
-			cooling-device = <&cpu0 16 16>,
-					 <&cpu1 16 16>,
-					 <&cpu2 16 16>,
-					 <&cpu3 16 16>;
+			cooling-device = <&cpu0 11 11>,
+					 <&cpu1 11 11>,
+					 <&cpu2 11 11>,
+					 <&cpu3 11 11>;
 		};
 	};
+};
+
+&dmc {
+	status = "okay";
+	devfreq-events = <&ppmu_event3_dmc0_0>,	<&ppmu_event3_dmc0_1>,
+			<&ppmu_event3_dmc1_0>, <&ppmu_event3_dmc1_1>;
+	device-handle = <&samsung_K3QF2F20DB>;
+	operating-points-v2 = <&dmc_opp_table>;
+	vdd-supply = <&buck1_reg>;
 };
 
 &dp {
@@ -484,6 +643,16 @@
 	};
 };
 
+&gpu_opp_table {	// frequency changes lead to display lags, 350 MHz chosen
+	/delete-node/opp-600000000;
+	/delete-node/opp-533000000;
+	/delete-node/opp-480000000;
+	/delete-node/opp-420000000;
+	/delete-node/opp-266000000;
+	/delete-node/opp-177000000;
+	/delete-node/opp-100000000;
+};
+
 &gpu_thermal {
 	/delete-node/trips;
 	trips {
@@ -534,6 +703,7 @@
 			cooling-device = <&gpu 7 7>;
 		};
 	};
+	/delete-node/cooling-maps;	// needed because of the opp removal
 };
 
 &i2c_3 {
@@ -542,7 +712,7 @@
 	#address-cells = <1>;
 	#size-cells = <0>;
 
-	magnetometer@c {
+	magnetometer: magnetometer@c {
 		compatible = "asahi-kasei,ak8963";
 		reg = <0x0c>;
 		vid-supply = <&ldo3_reg>;
@@ -562,7 +732,7 @@
 		reg = <0x10>;
 	};
 
-	accelerometer@18 {
+	accelerometer: accelerometer@18 {
 		compatible = "bosch,bmi055_accel";
 		reg = <0x18>;
 		vddio-supply = <&ldo3_reg>;
@@ -577,7 +747,7 @@
 				"0", "0", "1";
 	};
 
-	gyroscope@68 {
+	gyroscope: gyroscope@68 {
 		compatible = "bosch,bmi055_gyro";
 		reg = <0x68>;
 		vddio-supply = <&ldo3_reg>;
@@ -1134,6 +1304,22 @@
 		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
 		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV1>;
 	};
+};
+
+&ppmu_dmc0_0 {
+	status = "okay";
+};
+
+&ppmu_dmc0_1 {
+	status = "okay";
+};
+
+&ppmu_dmc1_0 {
+	status = "okay";
+};
+
+&ppmu_dmc1_1 {
+	status = "okay";
 };
 
 &rtc {
