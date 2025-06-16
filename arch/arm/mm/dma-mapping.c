@@ -1453,9 +1453,53 @@ static void arm_iommu_sync_single_for_device(struct device *dev,
 	arch_sync_dma_for_device(phys + offset, size, dir);
 }
 
+static struct page *arm_iommu_alloc_pages(struct device *dev, size_t size,
+		dma_addr_t *dma_handle, enum dma_data_direction dir, gfp_t gfp)
+{
+	const struct dma_map_ops *ops = get_dma_ops(dev);
+	struct page *page;
+
+	page = dma_alloc_contiguous(dev, size, gfp);
+	if (!page)
+		page = alloc_pages_node(dev_to_node(dev), gfp, get_order(size));
+	if (!page)
+		return NULL;
+
+	*dma_handle = ops->map_page(dev, page, 0, size, dir, DMA_ATTR_SKIP_CPU_SYNC);
+	if (*dma_handle == DMA_MAPPING_ERROR) {
+		dma_free_contiguous(dev, page, size);
+		return NULL;
+	}
+
+	size_t num_pages = size / PAGE_SIZE;
+	if (size % PAGE_SIZE)
+		num_pages++;  // Account for any extra bytes requiring another page
+
+	for (size_t i = 0; i < num_pages; i++) {
+		struct page *cur_page = nth_page(page, i);
+		void *virt_addr = kmap(cur_page);
+		if (!virt_addr)
+			return NULL;
+		memset(virt_addr, 0, PAGE_SIZE);
+		kunmap(cur_page);
+	}
+	return page;
+}
+
+static void arm_iommu_free_pages(struct device *dev, size_t size, struct page *page,
+		dma_addr_t dma_handle, enum dma_data_direction dir)
+{
+	const struct dma_map_ops *ops = get_dma_ops(dev);
+
+	ops->unmap_page(dev, dma_handle, size, dir, DMA_ATTR_SKIP_CPU_SYNC);
+	dma_free_contiguous(dev, page, size);
+}
+
 static const struct dma_map_ops iommu_ops = {
 	.alloc		= arm_iommu_alloc_attrs,
 	.free		= arm_iommu_free_attrs,
+	.alloc_pages_op	= arm_iommu_alloc_pages,
+	.free_pages = arm_iommu_free_pages,
 	.mmap		= arm_iommu_mmap_attrs,
 	.get_sgtable	= arm_iommu_get_sgtable,
 
