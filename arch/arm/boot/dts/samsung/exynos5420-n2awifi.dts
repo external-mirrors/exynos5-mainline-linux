@@ -106,6 +106,34 @@
 	regulator-max-microvolt = <1200000>;
 };
 
+&touch_avdd_2v8 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&touch_en>;
+	gpio = <&gpd1 5 GPIO_ACTIVE_HIGH>;
+};
+
+&tsp_sw3_2v8 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&touch_en1>;
+	gpio = <&gpd1 6 GPIO_ACTIVE_HIGH>;
+};
+
 &wifi {
 	compatible = "brcm,bcm4339-fmac", "brcm,bcm4329-fmac";
+};
+
+&pinctrl_1 {
+	touch_en: toch-en-pins {
+		samsung,pins = "gpd1-5";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV1>;
+	};
+
+	touch_en1: toch-en1-pins {
+		samsung,pins = "gpd1-6";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV1>;
+	};
 };
