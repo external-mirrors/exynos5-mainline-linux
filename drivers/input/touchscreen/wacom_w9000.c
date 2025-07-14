@@ -219,6 +219,7 @@ static int wacom_w9000_coord(struct wacom_w9000_data *wacom_data)
 			input_report_key(wacom_data->input_dev, BTN_TOUCH, 0);
 			input_report_key(wacom_data->input_dev, BTN_TOOL_PEN, 0);
 			input_report_key(wacom_data->input_dev, BTN_TOOL_RUBBER, 0);
+			input_sync(wacom_data->input_dev);
 
 			wacom_data->pen_proximity = 0;
 		}
@@ -443,6 +444,9 @@ static int wacom_w9000_probe(struct i2c_client *client)
 		regulator_disable(wacom_data->regulator);
 	else
 		enable_irq(wacom_data->irq);
+
+	input_report_switch(wacom_data->input_dev, SW_PEN_INSERTED, wacom_data->pen_inserted);
+	input_sync(wacom_data->input_dev);
 
 	if (wacom_data->pen_inserted_gpio) {
 		enable_irq(wacom_data->pen_insert_irq);
