@@ -328,6 +328,9 @@ static int wm8994_set_pdata_from_of(struct wm8994 *wm8994)
 
 	pdata->csnaddr_pd = of_property_read_bool(np, "wlf,csnaddr-pd");
 
+	if (of_find_property(np, "wlf,jd-ext-cap", NULL))
+		pdata->jd_ext_cap = true;
+
 	return 0;
 }
 #else
