@@ -145,6 +145,11 @@ properties:
       the length of wlf,drc-cfg-names.
       If absent, DRC is disabled.
 
+  wlf,jd-ext-cap:
+    type: boolean
+    description:
+      Jack detection circuit has an external capacitor.
+
 required:
   - compatible
   - reg
