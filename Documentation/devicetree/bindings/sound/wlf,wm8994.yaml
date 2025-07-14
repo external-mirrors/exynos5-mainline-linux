@@ -131,6 +131,20 @@ properties:
     description:
       Enable the internal pull-down resistor on the CS/ADDR pin.
 
+  wlf,drc-cfg-names:
+    $ref: /schemas/types.yaml#/definitions/string-array
+    description:
+      List of strings for the available DRC modes.
+      If absent, DRC is disabled.
+
+  wlf,drc-cfg-regs:
+    $ref: /schemas/types.yaml#/definitions/uint32-array
+    description:
+      Sets of default register values for DRC.
+      Each set corresponds to a DRC mode, so the number of sets should equal
+      the length of wlf,drc-cfg-names.
+      If absent, DRC is disabled.
+
 required:
   - compatible
   - reg
