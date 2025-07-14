@@ -261,7 +261,7 @@ static int wm8994_set_pdata_from_of(struct wm8994 *wm8994)
 {
 	struct device_node *np = wm8994->dev->of_node;
 	struct wm8994_pdata *pdata = &wm8994->pdata;
-	int i;
+	int i, ret;
 
 	if (!np)
 		return 0;
@@ -272,6 +272,46 @@ static int wm8994_set_pdata_from_of(struct wm8994 *wm8994)
 			if (wm8994->pdata.gpio_defaults[i] == 0)
 				pdata->gpio_defaults[i]
 					= WM8994_CONFIGURE_GPIO;
+		}
+	}
+
+	ret = of_property_count_strings(np, "wlf,drc-cfg-names");
+	if (ret > 0) {
+		pdata->num_drc_cfgs = ret;
+		pdata->drc_cfgs = devm_kmalloc_array(wm8994->dev,
+						     pdata->num_drc_cfgs,
+						     sizeof(struct wm8994_drc_cfg),
+						     GFP_KERNEL);
+		if (!pdata->drc_cfgs) {
+			dev_err(wm8994->dev,
+				 "Failed to allocate memory for drc_cfgs\n");
+			pdata->num_drc_cfgs = 0;
+		}
+
+		for (i = 0 ; i < pdata->num_drc_cfgs ; i++) {
+			ret = of_property_read_string_index(np,
+							    "wlf,drc-cfg-names",
+							    i,
+							    &pdata->drc_cfgs[i].name);
+			if (ret < 0) {
+				dev_warn(wm8994->dev,
+					 "Error parsing OF property wlf,drc-cfg-names: %d\n",
+					 ret);
+				pdata->num_drc_cfgs = 0;
+				break;
+			}
+
+			ret = of_property_read_u16_array(np,
+							 "wlf,drc-cfg-regs",
+							 pdata->drc_cfgs[i].regs,
+							 WM8994_DRC_REGS);
+			if (ret < 0) {
+				dev_warn(wm8994->dev,
+					 "Error parsing OF property wlf,drc-cfg-regs: %d\n",
+					 ret);
+				pdata->num_drc_cfgs = 0;
+				break;
+			}
 		}
 	}
 
