@@ -20,6 +20,7 @@
 #include <linux/extcon-provider.h>
 #include <linux/regmap.h>
 #include <linux/irqdomain.h>
+#include <linux/usb/role.h>
 
 #define	DEV_NAME			"max77693-muic"
 #define	DELAY_MS_DEFAULT		20000		/* unit: millisecond */
@@ -87,6 +88,8 @@ struct max77693_muic_info {
 
 	/* Button of dock device */
 	struct input_dev *dock;
+
+	struct usb_role_switch *role_sw;
 
 	/*
 	 * Default usb/uart path whether UART/USB or AUX_UART/AUX_USB
@@ -510,6 +513,8 @@ static int max77693_muic_dock_handler(struct max77693_muic_info *info,
 			extcon_set_state_sync(info->edev, EXTCON_USB, false);
 			extcon_set_state_sync(info->edev, EXTCON_CHG_USB_SDP,
 						false);
+			if (info->role_sw)
+				usb_role_switch_set_role(info->role_sw, USB_ROLE_NONE);
 		}
 		break;
 	default:
@@ -577,6 +582,7 @@ static int max77693_muic_adc_ground_handler(struct max77693_muic_info *info)
 	int cable_type_gnd;
 	int ret = 0;
 	bool attached;
+	enum usb_role role_val;
 
 	cable_type_gnd = max77693_muic_get_cable_type(info,
 				MAX77693_CABLE_GROUP_ADC_GND, &attached);
@@ -590,6 +596,14 @@ static int max77693_muic_adc_ground_handler(struct max77693_muic_info *info)
 		if (ret < 0)
 			return ret;
 		extcon_set_state_sync(info->edev, EXTCON_USB_HOST, attached);
+
+		if (info->role_sw) {
+			if (attached)
+				role_val = USB_ROLE_HOST;
+			else
+				role_val = USB_ROLE_NONE;
+			usb_role_switch_set_role(info->role_sw, role_val);
+		}
 		break;
 	case MAX77693_MUIC_GND_AV_CABLE_LOAD:
 		/* Audio Video Cable with load, PATH:AUDIO */
@@ -767,6 +781,7 @@ static int max77693_muic_chg_handler(struct max77693_muic_info *info)
 	bool attached;
 	bool cable_attached;
 	int ret = 0;
+	enum usb_role role_val;
 
 	chg_type = max77693_muic_get_cable_type(info,
 				MAX77693_CABLE_GROUP_CHG, &attached);
@@ -830,6 +845,14 @@ static int max77693_muic_chg_handler(struct max77693_muic_info *info)
 						attached);
 			extcon_set_state_sync(info->edev, EXTCON_CHG_USB_SDP,
 						attached);
+
+			if (info->role_sw) {
+				if (attached)
+					role_val = USB_ROLE_DEVICE;
+				else
+					role_val = USB_ROLE_NONE;
+				usb_role_switch_set_role(info->role_sw, role_val);
+			}
 
 			if (!cable_attached)
 				extcon_set_state_sync(info->edev, EXTCON_DOCK,
@@ -901,6 +924,14 @@ static int max77693_muic_chg_handler(struct max77693_muic_info *info)
 						attached);
 			extcon_set_state_sync(info->edev, EXTCON_CHG_USB_SDP,
 						attached);
+
+			if (info->role_sw) {
+				if (attached)
+					role_val = USB_ROLE_DEVICE;
+				else
+					role_val = USB_ROLE_NONE;
+				usb_role_switch_set_role(info->role_sw, role_val);
+			}
 			break;
 		case MAX77693_CHARGER_TYPE_DEDICATED_CHG:
 			/* Only TA cable */
@@ -1063,6 +1094,7 @@ static int max77693_muic_probe(struct platform_device *pdev)
 	struct max77693_platform_data *pdata = dev_get_platdata(max77693->dev);
 	struct max77693_muic_info *info;
 	struct max77693_reg_data *init_data;
+	struct fwnode_handle *fwnode;
 	int num_init_data;
 	int delay_jiffies;
 	int cable_type;
@@ -1232,6 +1264,20 @@ static int max77693_muic_probe(struct platform_device *pdev)
 	}
 	dev_info(info->dev, "device ID : 0x%x\n", id);
 
+	fwnode = device_get_named_child_node(info->dev, "connector");
+
+	info->role_sw = fwnode_usb_role_switch_get(fwnode);
+	fwnode_handle_put(fwnode);
+	if (IS_ERR(info->role_sw)) {
+		int ret = PTR_ERR(info->role_sw);
+		dev_warn(info->dev, "USB role switch not available: %d, continuing\n", ret);
+		if (ret == -EPROBE_DEFER)
+			return ret;
+		info->role_sw = NULL;
+	}
+	else if (!info->role_sw)
+		dev_info(info->dev, "USB role switch not found");
+
 	/* Set ADC debounce time */
 	max77693_muic_set_debounce_time(info, ADC_DEBOUNCE_TIME_25MS);
 
@@ -1250,6 +1296,14 @@ static int max77693_muic_probe(struct platform_device *pdev)
 	return ret;
 }
 
+static void max77693_muic_remove(struct platform_device *pdev)
+{
+	struct max77693_muic_info *info = platform_get_drvdata(pdev);
+
+	if (info->role_sw)
+		usb_role_switch_put(info->role_sw);
+}
+
 static const struct of_device_id of_max77693_muic_dt_match[] = {
 	{ .compatible = "maxim,max77693-muic", },
 	{ /* sentinel */ },
@@ -1262,6 +1316,7 @@ static struct platform_driver max77693_muic_driver = {
 		.of_match_table = of_max77693_muic_dt_match,
 	},
 	.probe		= max77693_muic_probe,
+	.remove		= max77693_muic_remove,
 };
 
 module_platform_driver(max77693_muic_driver);
