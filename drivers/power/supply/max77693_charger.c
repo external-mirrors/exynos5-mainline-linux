@@ -8,6 +8,7 @@
 #include <linux/devm-helpers.h>
 #include <linux/extcon.h>
 #include <linux/module.h>
+#include <linux/of_device.h>
 #include <linux/platform_device.h>
 #include <linux/power_supply.h>
 #include <linux/regmap.h>
@@ -19,10 +20,16 @@
 static const char *max77693_charger_model		= "MAX77693";
 static const char *max77693_charger_manufacturer	= "Maxim Integrated";
 
+struct max77693_properties {
+	u32 fast_charge_current_step;
+	u32 input_current_step;
+};
+
 struct max77693_charger {
 	struct device		*dev;
 	struct max77693_dev	*max77693;
 	struct power_supply	*charger;
+	const struct max77693_properties *props;
 
 	u32 constant_volt;
 	u32 min_system_volt;
@@ -37,6 +44,16 @@ struct max77693_charger {
 		struct notifier_block nb;
 		struct work_struct work;
 	} cable;
+};
+
+static const struct max77693_properties max77693_props = {
+	.fast_charge_current_step = 33300,	/* 33.3mA steps */
+	.input_current_step = 20000,		/* 20mA steps */
+};
+
+static const struct max77693_properties max77888_props = {
+	.fast_charge_current_step = 40000,	/* 40mA steps */
+	.input_current_step = 25000,		/* 25mA steps */
 };
 
 static int max77693_get_charger_state(struct regmap *regmap, int *val)
@@ -213,12 +230,12 @@ static int max77693_get_online(struct regmap *regmap, int *val)
  * - Fast charge current limit, which limits the current going to the battery.
  */
 
-static int max77693_get_input_current_limit(struct regmap *regmap, int *val)
+static int max77693_get_input_current_limit(struct max77693_charger *chg, int *val)
 {
 	unsigned int data;
 	int ret;
 
-	ret = regmap_read(regmap, MAX77693_CHG_REG_CHG_CNFG_09, &data);
+	ret = regmap_read(chg->max77693->regmap, MAX77693_CHG_REG_CHG_CNFG_09, &data);
 	if (ret < 0)
 		return ret;
 
@@ -229,24 +246,24 @@ static int max77693_get_input_current_limit(struct regmap *regmap, int *val)
 		/* The first four values (0x00..0x03) are 60mA */
 		*val = 60000;
 	else
-		*val = data * 20000; /* 20mA steps */
+		*val = data * chg->props->input_current_step;
 
 	return 0;
 }
 
-static int max77693_get_fast_charge_current(struct regmap *regmap, int *val)
+static int max77693_get_fast_charge_current(struct max77693_charger *chg, int *val)
 {
 	unsigned int data;
 	int ret;
 
-	ret = regmap_read(regmap, MAX77693_CHG_REG_CHG_CNFG_02, &data);
+	ret = regmap_read(chg->max77693->regmap, MAX77693_CHG_REG_CHG_CNFG_02, &data);
 	if (ret < 0)
 		return ret;
 
 	data &= CHG_CNFG_02_CC_MASK;
 	data >>= CHG_CNFG_02_CC_SHIFT;
 
-	*val = data * 33300; /* 33.3mA steps */
+	*val = data * chg->props->fast_charge_current_step;
 
 	return 0;
 }
@@ -288,10 +305,10 @@ static int max77693_charger_get_property(struct power_supply *psy,
 		ret = max77693_get_online(regmap, &val->intval);
 		break;
 	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
-		ret = max77693_get_input_current_limit(regmap, &val->intval);
+		ret = max77693_get_input_current_limit(chg, &val->intval);
 		break;
 	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
-		ret = max77693_get_fast_charge_current(regmap, &val->intval);
+		ret = max77693_get_fast_charge_current(chg, &val->intval);
 		break;
 	case POWER_SUPPLY_PROP_MODEL_NAME:
 		val->strval = max77693_charger_model;
@@ -616,7 +633,7 @@ static int max77693_set_input_current_limit(struct max77693_charger *chg,
 		return -EINVAL;
 	};
 
-	data = uamp / 20000; /* 20mA steps */
+	data = uamp / chg->props->input_current_step;
 
 	data <<= CHG_CNFG_09_CHGIN_ILIM_SHIFT;
 
@@ -637,7 +654,7 @@ static int max77693_set_fast_charge_current(struct max77693_charger *chg,
 		return -EINVAL;
 	}
 
-	data = uamp / 33300; /* 0.1A/3 steps */
+	data = uamp / chg->props->fast_charge_current_step;
 
 	data <<= CHG_CNFG_02_CC_SHIFT;
 
@@ -920,12 +937,16 @@ static int max77693_dt_init(struct device *dev, struct max77693_charger *chg)
 		chg->fast_charge_current =
 			battery_info->constant_charge_current_max_ua;
 
+	chg->props = of_device_get_match_data(chg->dev);
+
 	return 0;
 }
 #else /* CONFIG_OF */
 static int max77693_dt_init(struct device *dev, struct max77693_charger *chg)
 {
 	chg->fast_charge_current = DEFAULT_FAST_CHARGE_CURRENT;
+
+	chg->props = &max77693_props;
 
 	return 0;
 }
@@ -1020,8 +1041,16 @@ static void max77693_charger_remove(struct platform_device *pdev)
 	device_remove_file(&pdev->dev, &dev_attr_fast_charge_timer);
 }
 
+static const struct of_device_id of_max77693_charger_dt_match[] = {
+	{ .compatible = "maxim,max77693-charger", .data = &max77693_props, },
+	{ .compatible = "maxim,max77888-charger", .data = &max77888_props, },
+	{ /* sentinel */ },
+};
+MODULE_DEVICE_TABLE(of, of_max77693_charger_dt_match);
+
 static const struct platform_device_id max77693_charger_id[] = {
 	{ "max77693-charger", 0, },
+	{ "max77888-charger", 0, },
 	{ }
 };
 MODULE_DEVICE_TABLE(platform, max77693_charger_id);
@@ -1029,6 +1058,7 @@ MODULE_DEVICE_TABLE(platform, max77693_charger_id);
 static struct platform_driver max77693_charger_driver = {
 	.driver = {
 		.name	= "max77693-charger",
+		.of_match_table = of_max77693_charger_dt_match,
 	},
 	.probe		= max77693_charger_probe,
 	.remove		= max77693_charger_remove,
