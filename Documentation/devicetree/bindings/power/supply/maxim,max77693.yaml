@@ -21,7 +21,9 @@ allOf:
 
 properties:
   compatible:
-    const: maxim,max77693-charger
+    enum:
+      - maxim,max77693-charger
+      - maxim,max77888-charger
 
   monitored-battery:
     description:
