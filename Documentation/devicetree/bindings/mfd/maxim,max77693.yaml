@@ -66,6 +66,11 @@ properties:
           audio-video (av) cable.
         type: boolean
 
+      maxim,safeout-for-usb:
+        description: Some chips need to have Safeout1 enabled
+          during USB peripheral mode for it to work.
+        type: boolean
+
     required:
       - compatible
 
