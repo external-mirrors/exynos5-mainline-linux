@@ -60,6 +60,12 @@ properties:
         $ref: /schemas/connector/usb-connector.yaml#
         unevaluatedProperties: false
 
+      maxim,av-cable-as-otg:
+        description: Some chips have broken firmware and
+          report the on-the-go (OTG) cable as an
+          audio-video (av) cable.
+        type: boolean
+
     required:
       - compatible
 
