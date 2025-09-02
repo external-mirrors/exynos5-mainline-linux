@@ -97,6 +97,8 @@ struct max77693_muic_info {
 	 */
 	int path_usb;
 	int path_uart;
+
+	bool av_cable_as_otg;
 };
 
 enum max77693_muic_cable_group {
@@ -190,6 +192,7 @@ enum max77693_muic_acc_type {
 	MAX77693_MUIC_GND_USB_HOST = 0x100,	/* 0x0|      0|     0|    0| */
 	MAX77693_MUIC_GND_USB_HOST_VB = 0x104,	/* 0x0|      1|     0|    0| */
 	MAX77693_MUIC_GND_AV_CABLE_LOAD = 0x102,/* 0x0|      0|     1|    0| */
+	MAX77693_MUIC_GND_AV_CABLE_LOAD_VB = 0x106,	/* 0x0|      1|     1|    0| */
 	MAX77693_MUIC_GND_MHL = 0x103,		/* 0x0|      0|     1|    1| */
 	MAX77693_MUIC_GND_MHL_VB = 0x107,	/* 0x0|      1|     1|    1| */
 };
@@ -577,12 +580,34 @@ static int max77693_muic_dock_button_handler(struct max77693_muic_info *info,
 	return 0;
 }
 
+static int max77693_set_usb(struct max77693_muic_info *info, bool attached)
+{
+	int ret = 0;
+	enum usb_role role_val;
+
+	/* USB_HOST, PATH: AP_USB */
+	ret = max77693_muic_set_path(info, MAX77693_CONTROL1_SW_USB,
+					attached);
+	if (ret < 0)
+		return ret;
+	extcon_set_state_sync(info->edev, EXTCON_USB_HOST, attached);
+
+	if (info->role_sw) {
+		if (attached)
+			role_val = USB_ROLE_HOST;
+		else
+			role_val = USB_ROLE_NONE;
+		usb_role_switch_set_role(info->role_sw, role_val);
+	}
+
+	return ret;
+}
+
 static int max77693_muic_adc_ground_handler(struct max77693_muic_info *info)
 {
 	int cable_type_gnd;
 	int ret = 0;
 	bool attached;
-	enum usb_role role_val;
 
 	cable_type_gnd = max77693_muic_get_cable_type(info,
 				MAX77693_CABLE_GROUP_ADC_GND, &attached);
@@ -590,30 +615,27 @@ static int max77693_muic_adc_ground_handler(struct max77693_muic_info *info)
 	switch (cable_type_gnd) {
 	case MAX77693_MUIC_GND_USB_HOST:
 	case MAX77693_MUIC_GND_USB_HOST_VB:
-		/* USB_HOST, PATH: AP_USB */
-		ret = max77693_muic_set_path(info, MAX77693_CONTROL1_SW_USB,
-						attached);
+		ret = max77693_set_usb(info, attached);
 		if (ret < 0)
 			return ret;
-		extcon_set_state_sync(info->edev, EXTCON_USB_HOST, attached);
-
-		if (info->role_sw) {
-			if (attached)
-				role_val = USB_ROLE_HOST;
-			else
-				role_val = USB_ROLE_NONE;
-			usb_role_switch_set_role(info->role_sw, role_val);
-		}
 		break;
 	case MAX77693_MUIC_GND_AV_CABLE_LOAD:
-		/* Audio Video Cable with load, PATH:AUDIO */
-		ret = max77693_muic_set_path(info, MAX77693_CONTROL1_SW_AUDIO,
-						attached);
-		if (ret < 0)
-			return ret;
-		extcon_set_state_sync(info->edev, EXTCON_USB, attached);
-		extcon_set_state_sync(info->edev, EXTCON_CHG_USB_SDP,
-					attached);
+	case MAX77693_MUIC_GND_AV_CABLE_LOAD_VB:
+		if (info->av_cable_as_otg) {
+			ret = max77693_set_usb(info, attached);
+			if (ret < 0)
+				return ret;
+		}
+		else {
+			/* Audio Video Cable with load, PATH:AUDIO */
+			ret = max77693_muic_set_path(info, MAX77693_CONTROL1_SW_AUDIO,
+							attached);
+			if (ret < 0)
+				return ret;
+			extcon_set_state_sync(info->edev, EXTCON_USB, attached);
+			extcon_set_state_sync(info->edev, EXTCON_CHG_USB_SDP,
+							attached);
+		}
 		break;
 	case MAX77693_MUIC_GND_MHL:
 	case MAX77693_MUIC_GND_MHL_VB:
@@ -1088,6 +1110,13 @@ static void max77693_muic_detect_cable_wq(struct work_struct *work)
 	max77693_muic_detect_accessory(info);
 }
 
+static int max77693_dt_init(struct device *dev, struct max77693_muic_info *info)
+{
+	info->av_cable_as_otg = device_property_read_bool(dev,
+				"maxim,av-cable-as-otg");
+	return 0;
+}
+
 static int max77693_muic_probe(struct platform_device *pdev)
 {
 	struct max77693_dev *max77693 = dev_get_drvdata(pdev->dev.parent);
@@ -1123,6 +1152,10 @@ static int max77693_muic_probe(struct platform_device *pdev)
 			return ret;
 		}
 	}
+
+	ret = max77693_dt_init(&pdev->dev, info);
+	if (ret)
+		return ret;
 
 	/* Register input device for button of dock device */
 	info->dock = devm_input_allocate_device(&pdev->dev);
