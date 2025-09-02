@@ -99,6 +99,7 @@ struct max77693_muic_info {
 	int path_uart;
 
 	bool av_cable_as_otg;
+	bool safeout_for_usb;
 };
 
 enum max77693_muic_cable_group {
@@ -942,6 +943,15 @@ static int max77693_muic_chg_handler(struct max77693_muic_info *info)
 			if (ret < 0)
 				return ret;
 
+			if (info->safeout_for_usb) {
+				ret = regmap_update_bits(info->max77693->regmap,
+					MAX77693_CHG_REG_SAFEOUT_CTRL,
+					SAFEOUT_CTRL_ENSAFEOUT1_MASK,
+					attached << SAFEOUT_CTRL_ENSAFEOUT1_SHIFT);
+				if (ret < 0)
+					return ret;
+			}
+
 			extcon_set_state_sync(info->edev, EXTCON_USB,
 						attached);
 			extcon_set_state_sync(info->edev, EXTCON_CHG_USB_SDP,
@@ -1114,6 +1124,8 @@ static int max77693_dt_init(struct device *dev, struct max77693_muic_info *info)
 {
 	info->av_cable_as_otg = device_property_read_bool(dev,
 				"maxim,av-cable-as-otg");
+	info->safeout_for_usb = device_property_read_bool(dev,
+				"maxim,safeout-for-usb");
 	return 0;
 }
 
