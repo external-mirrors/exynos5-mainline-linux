@@ -40,6 +40,7 @@ dtb-$(CONFIG_ARCH_EXYNOS5) += \
 	exynos5420-chagall-wifi.dtb \
 	exynos5420-klimt-lte.dtb \
 	exynos5420-klimt-wifi.dtb \
+	exynos5420-n1awifi.dtb \
 	exynos5420-n2awifi.dtb \
 	exynos5420-v1a-wifi.dtb \
 	exynos5422-odroidhc1.dtb \
