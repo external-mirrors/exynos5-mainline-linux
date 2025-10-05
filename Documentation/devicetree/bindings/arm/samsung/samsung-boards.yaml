@@ -154,6 +154,7 @@ properties:
               - samsung,chagall-wifi            # Samsung SM-T800
               - samsung,klimt-wifi              # Samsung SM-T700
               - samsung,klimt-lte               # Samsung SM-T705
+              - samsung,n1awifi                 # Samsung SM-P600
               - samsung,n2awifi                 # Samsung SM-T520
               - samsung,smdk5420                # Samsung SMDK5420 eval
               - samsung,v1a-wifi                # Samsung SM-P900
