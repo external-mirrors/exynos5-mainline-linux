@@ -1,0 +1,220 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Samsung's Exynos5420 Galaxy Note 10.1 (2014) WiFi board device tree source
+ *
+ * Copyright (c) 2012-2013 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ * Copyright (c) 2022 Henrik Grimler
+ * Copyright (c) 2025 Hendrik Noack
+ */
+
+/dts-v1/;
+#include "exynos5420-galaxy-tab-pro-common.dtsi"
+
+/ {
+	model = "Samsung Galaxy Note Pro 10.1 (2014) WiFi based on Exynos5420";
+	compatible = "samsung,n1awifi", "samsung,exynos5420", \
+			"samsung,exynos5";
+
+	memory@20000000 {
+		device_type = "memory";
+		reg = <0x20000000 0xbfa00000>;
+	};
+
+	stylus_reg: stylus-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "stylus_reg";
+		pinctrl-names = "default";
+		pinctrl-0 = <&stylus_ldo_en>;
+		gpio = <&gpd1 4 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		vin-supply = <&ldo3_reg>;
+	};
+};
+
+&i2c_0 {
+	clock-frequency = <400000>;
+};
+
+&hsi2c_5 {
+	status = "okay";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	backlight: backlight@2c {
+		compatible = "ti,lp8556";
+		reg = <0x2c>;
+
+		bl-name = "lcd-bl";
+		dev-ctrl = /bits/ 8 <0x01>;
+		init-brt = /bits/ 8 <0x72>;	/* 114 */
+
+		pwms = <&pwm 0 100000 0>;
+		pwm-names = "lp8556";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pwm0_out>;
+
+		enable-supply = <&backlight_reset_supply>;
+
+		/* higher inductor current limit */
+		rom-98h {
+			rom-addr = /bits/ 8 <0x98>;
+			rom-val = /bits/ 8 <0xa1>;
+		};
+
+		/* automatic standby via pwm disabled, 25 mA max LED current */
+		rom-a1h {
+			rom-addr = /bits/ 8 <0xa1>;
+			rom-val = /bits/ 8 <0x5f>;
+		};
+
+		/* 200 ms slope, heavy smoothing, 1-bit PWM input hysteresis */
+		rom-a3h {
+			rom-addr = /bits/ 8 <0xa3>;
+			rom-val = /bits/ 8 <0x5e>;
+		};
+
+		/* disable PWM passthrough, 6 PWM output phases, 9616 Hz PWM frequency */
+		rom-a5h {
+			rom-addr = /bits/ 8 <0xa5>;
+			rom-val = /bits/ 8 <0x04>;
+		};
+
+		/* all reserved */
+		rom-a8h {
+			rom-addr = /bits/ 8 <0xa8>;
+			rom-val = /bits/ 8 <0x00>;
+		};
+
+		/* 24 V max output voltage, jump detection on pwm input disabled */
+		rom-a9h {
+			rom-addr = /bits/ 8 <0xa9>;
+			rom-val = /bits/ 8 <0xa0>;
+		};
+	};
+};
+
+&hsi2c_8 {
+	status = "okay";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	digitizer@56 {
+		compatible = "wacom,w9007a_lt03";
+		reg = <0x56>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&stylus_pdct &stylus_fwe &stylus_insert &stylus_irq>;
+		interrupt-parent = <&gpd1>;
+		interrupts = <1 IRQ_TYPE_EDGE_RISING>;
+
+		vdd-supply = <&stylus_reg>;
+
+		pdct-gpios = <&gpd1 2 GPIO_ACTIVE_LOW>;
+		flash-mode-gpios = <&gpd1 3 GPIO_ACTIVE_HIGH>;
+		pen-inserted-gpios = <&gpx0 0 GPIO_ACTIVE_LOW>;
+
+		touchscreen-x-mm = <216>;
+		touchscreen-y-mm = <135>;
+	};
+};
+
+&ldo24_reg {
+	regulator-name = "cam_af_2v8_pm";
+	regulator-min-microvolt = <2800000>;
+	regulator-max-microvolt = <2800000>;
+};
+
+&ldo26_reg {
+	regulator-name = "vcc_3v0_motor";
+	regulator-min-microvolt = <3000000>;
+	regulator-max-microvolt = <3000000>;
+};
+
+&ldo34_reg {
+	/* Not defined, something with 3V */
+	regulator-name = "vdd_ldo34";
+	regulator-min-microvolt = <3000000>;
+	regulator-max-microvolt = <3000000>;
+};
+
+&ldo35_reg {
+	regulator-name = "cam_sensor_core_1v2";
+	regulator-min-microvolt = <1050000>;
+	regulator-max-microvolt = <1200000>;
+};
+
+&touch_avdd_2v8 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&touch_en>;
+	gpio = <&gpd1 5 GPIO_ACTIVE_HIGH>;
+};
+
+&tsp_sw3_2v8 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&touch_en1>;
+	gpio = <&gpd1 6 GPIO_ACTIVE_HIGH>;
+};
+
+&wifi {
+	compatible = "brcm,bcm4339-fmac", "brcm,bcm4329-fmac";
+};
+
+&pinctrl_0 {
+	stylus_insert: stylus-insert-pins {
+		samsung,pins = "gpx0-0";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_F>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+	};
+};
+
+&pinctrl_1 {
+	stylus_irq: stylus-irq-pins {
+		samsung,pins = "gpd1-1";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_F>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+	};
+
+	stylus_pdct: stylus-pdct-pins {
+		samsung,pins = "gpd1-2";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_F>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+	};
+
+	stylus_fwe: stylus-fwe-pins {
+		samsung,pins = "gpd1-3";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV1>;
+	};
+
+	stylus_ldo_en: stylus-ldo-en-pins {
+		samsung,pins = "gpd1-4";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV1>;
+	};
+
+	touch_en: toch-en-pins {
+		samsung,pins = "gpd1-5";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV1>;
+	};
+
+	touch_en1: toch-en1-pins {
+		samsung,pins = "gpd1-6";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV1>;
+	};
+};
+
+&pinctrl_3 {
+	i2c24_gpio_bus: i2c24-gpio-bus-pins {
+		samsung,pins = "gpa2-4", "gpa2-5";
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
+		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV1>;
+	};
+};
