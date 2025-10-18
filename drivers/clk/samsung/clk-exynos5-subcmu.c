@@ -7,6 +7,7 @@
 #include <linux/io.h>
 #include <linux/mod_devicetable.h>
 #include <linux/of.h>
+#include <linux/of_platform.h>
 #include <linux/platform_device.h>
 #include <linux/pm_domain.h>
 #include <linux/pm_runtime.h>
@@ -146,7 +147,11 @@ static int __init exynos5_clk_register_subcmu(struct device *parent,
 
 	pdev->dev.parent = parent;
 	platform_set_drvdata(pdev, (void *)info);
-	of_genpd_add_device(&genpdspec, &pdev->dev);
+	ret = of_genpd_add_device(&genpdspec, &pdev->dev);
+	if (ret) {
+		platform_device_put(pdev);
+		return ret;
+	}
 	ret = platform_device_add(pdev);
 	if (ret)
 		platform_device_put(pdev);
@@ -154,11 +159,26 @@ static int __init exynos5_clk_register_subcmu(struct device *parent,
 	return ret;
 }
 
+static int __init exynos5_clk_check_pd_probe(void)
+{
+	struct device_node *np;
+
+	for_each_compatible_node(np, NULL, "samsung,exynos4210-pd") {
+		if (of_find_device_by_node(np) == NULL)
+			return -EPROBE_DEFER;
+	}
+	return 0;
+}
+
 static int __init exynos5_clk_probe(struct platform_device *pdev)
 {
 	struct device_node *np;
 	const char *name;
-	int i;
+	int i, ret;
+
+	ret = exynos5_clk_check_pd_probe();
+	if (ret)
+		return ret;
 
 	for_each_compatible_node(np, NULL, "samsung,exynos4210-pd") {
 		if (of_property_read_string(np, "label", &name) < 0)
