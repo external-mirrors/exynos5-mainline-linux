@@ -15,8 +15,6 @@
 #include "i2s.h"
 #include "../codecs/wm8994.h"
 
-#define DEFAULT_FLL1_RATE 22579200U
-
 struct manta_priv {
 	struct clk *mclk1;
 	struct clk *mclk2;
@@ -38,8 +36,9 @@ static int manta_start_fll1(struct snd_soc_pcm_runtime *rtd, unsigned int rate)
 	 * If no new rate is requested, set FLL1 to a sane default for jack
 	 * detection.
 	 */
+	mclk1_rate = clk_get_rate(priv->mclk1);
 	if (!rate)
-		rate = DEFAULT_FLL1_RATE;
+		rate = mclk1_rate / 2;
 
 	if (rate != priv->fll1_rate && priv->fll1_rate) {
 		/*
@@ -50,7 +49,6 @@ static int manta_start_fll1(struct snd_soc_pcm_runtime *rtd, unsigned int rate)
 		 * Set FFL clock to maximum during transition in case AIF2
 		 * is active to ensure SYSCLK > 256 x fs
 		 */
-		mclk1_rate = clk_get_rate(priv->mclk1);
 		ret = snd_soc_dai_set_sysclk(codec, WM8994_SYSCLK_MCLK1,
 					     mclk1_rate / 2, SND_SOC_CLOCK_IN);
 		if (ret < 0) {
@@ -61,7 +59,6 @@ static int manta_start_fll1(struct snd_soc_pcm_runtime *rtd, unsigned int rate)
 	}
 
 	/* Switch the FLL */
-	mclk1_rate = clk_get_rate(priv->mclk1);
 	ret = snd_soc_dai_set_pll(codec, WM8994_FLL1, WM8994_FLL_SRC_MCLK1,
 				  mclk1_rate, rate);
 	if (ret < 0) {
@@ -80,7 +77,7 @@ static int manta_start_fll1(struct snd_soc_pcm_runtime *rtd, unsigned int rate)
 	return 0;
 }
 
-static int manta_stop_flls(struct snd_soc_pcm_runtime *rtd)
+static int manta_stop_fll1(struct snd_soc_pcm_runtime *rtd)
 {
 	struct snd_soc_card *card = rtd->card;
 	struct manta_priv *priv = snd_soc_card_get_drvdata(card);
@@ -88,11 +85,7 @@ static int manta_stop_flls(struct snd_soc_pcm_runtime *rtd)
 	unsigned long mclk2_rate;
 	int ret;
 
-	/*
-	 * Playback/capture has stopped, so switch to the slower
-	 * MCLK2 for reduced power consumption. hw_params handles
-	 * turning the FLL back on when needed.
-	 */
+	/* Switch to the slower MCLK2 for reduced power consumption */
 	mclk2_rate = clk_get_rate(priv->mclk2);
 	ret = snd_soc_dai_set_sysclk(codec, WM8994_SYSCLK_MCLK2, mclk2_rate,
 				     SND_SOC_CLOCK_IN);
@@ -112,19 +105,53 @@ static int manta_stop_flls(struct snd_soc_pcm_runtime *rtd)
 	return 0;
 }
 
+static unsigned int manta_rates[] =
+        {8000, 11025, 12000, 16000, 22050, 24000};
+static struct snd_pcm_hw_constraint_list manta_constraints_rates = {
+        .count = ARRAY_SIZE(manta_rates),
+        .list = manta_rates,
+};
+
+static int manta_wm1811_startup(struct snd_pcm_substream *substream)
+{
+	return snd_pcm_hw_constraint_list(substream->runtime, 0,
+					  SNDRV_PCM_HW_PARAM_RATE,
+					  &manta_constraints_rates);
+}
+
 static int manta_wm1811_aif1_hw_params(struct snd_pcm_substream *substream,
 				       struct snd_pcm_hw_params *params)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	unsigned int rate;
+	unsigned int prate, rate;
 
-	rate = params_rate(params) * 512;
+	prate = params_rate(params);
+
+	/*
+	 * Ensure clock compatibility with high performance mode of DAC operation.
+	 * Note that sample rates > 48kHz are not supported.
+	 */
+	if (prate <= 24000)
+		rate = prate * 512;
+	else if (prate <= 48000)
+		rate = prate * 256;
+	else
+		return -EINVAL;
 
 	return manta_start_fll1(rtd, rate);
 }
 
+static int manta_wm1811_aif1_hw_free(struct snd_pcm_substream *substream)
+{
+	struct snd_soc_pcm_runtime *rtd = snd_soc_substream_to_rtd(substream);
+
+	return manta_stop_fll1(rtd);
+}
+
 static struct snd_soc_ops manta_wm1811_aif1_ops = {
+	.startup = manta_wm1811_startup,
 	.hw_params = manta_wm1811_aif1_hw_params,
+	.hw_free = manta_wm1811_aif1_hw_free,
 };
 
 SND_SOC_DAILINK_DEFS(wm1811_pri,
@@ -174,7 +201,7 @@ static int manta_set_bias_level_post(struct snd_soc_card *card,
 		return 0;
 
 	if (level == SND_SOC_BIAS_STANDBY)
-		ret = manta_stop_flls(rtd);
+		ret = manta_stop_fll1(rtd);
 
 	dapm->bias_level = level;
 
@@ -216,8 +243,10 @@ static int manta_late_probe(struct snd_soc_card *card)
 	}
 
 	ret = snd_soc_card_jack_new(card, "Headset",
-				    SND_JACK_HEADSET | SND_JACK_MECHANICAL |
-				    SND_JACK_BTN_0 | SND_JACK_BTN_1 |
+				    SND_JACK_HEADSET |
+				    SND_JACK_MECHANICAL |
+				    SND_JACK_BTN_0 |
+				    SND_JACK_BTN_1 |
 				    SND_JACK_BTN_2,
 				    &priv->headset_jack);
 	if (ret)
@@ -256,6 +285,7 @@ static int manta_late_probe(struct snd_soc_card *card)
 
 	wm8958_mic_detect(codec->component, &priv->headset_jack, NULL, NULL,
 			  NULL, NULL);
+
 	return 0;
 }
 
