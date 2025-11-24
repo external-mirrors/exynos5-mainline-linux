@@ -1458,6 +1458,7 @@ static struct page *arm_iommu_alloc_pages(struct device *dev, size_t size,
 {
 	const struct dma_map_ops *ops = get_dma_ops(dev);
 	struct page *page;
+	phys_addr_t phys;
 
 	page = dma_alloc_contiguous(dev, size, gfp);
 	if (!page)
@@ -1465,7 +1466,8 @@ static struct page *arm_iommu_alloc_pages(struct device *dev, size_t size,
 	if (!page)
 		return NULL;
 
-	*dma_handle = ops->map_page(dev, page, 0, size, dir, DMA_ATTR_SKIP_CPU_SYNC);
+	phys = page_to_phys(page);
+	*dma_handle = ops->map_phys(dev, phys, size, dir, DMA_ATTR_SKIP_CPU_SYNC);
 	if (*dma_handle == DMA_MAPPING_ERROR) {
 		dma_free_contiguous(dev, page, size);
 		return NULL;
@@ -1476,7 +1478,7 @@ static struct page *arm_iommu_alloc_pages(struct device *dev, size_t size,
 		num_pages++;  // Account for any extra bytes requiring another page
 
 	for (size_t i = 0; i < num_pages; i++) {
-		struct page *cur_page = nth_page(page, i);
+		struct page *cur_page = page + i;
 		void *virt_addr = kmap(cur_page);
 		if (!virt_addr)
 			return NULL;
@@ -1491,7 +1493,7 @@ static void arm_iommu_free_pages(struct device *dev, size_t size, struct page *p
 {
 	const struct dma_map_ops *ops = get_dma_ops(dev);
 
-	ops->unmap_page(dev, dma_handle, size, dir, DMA_ATTR_SKIP_CPU_SYNC);
+	ops->unmap_phys(dev, dma_handle, size, dir, DMA_ATTR_SKIP_CPU_SYNC);
 	dma_free_contiguous(dev, page, size);
 }
 
