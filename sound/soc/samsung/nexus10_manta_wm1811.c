@@ -178,11 +178,11 @@ static int manta_set_bias_level(struct snd_soc_card *card,
 		snd_soc_get_pcm_runtime(card, &card->dai_link[0]);
 	struct snd_soc_dai *codec = snd_soc_rtd_to_codec(rtd, 0);
 
-	if (dapm->dev != codec->dev)
+	if (snd_soc_dapm_to_dev(dapm) != codec->dev)
 		return 0;
 
 	if ((level == SND_SOC_BIAS_PREPARE) &&
-	    (dapm->bias_level == SND_SOC_BIAS_STANDBY))
+	    (snd_soc_dapm_get_bias_level(dapm) == SND_SOC_BIAS_STANDBY))
 		return manta_start_fll1(rtd, 0);
 
 	return 0;
@@ -197,13 +197,11 @@ static int manta_set_bias_level_post(struct snd_soc_card *card,
 	struct snd_soc_dai *codec = snd_soc_rtd_to_codec(rtd, 0);
 	int ret = 0;
 
-	if (dapm->dev != codec->dev)
+	if (snd_soc_dapm_to_dev(dapm) != codec->dev)
 		return 0;
 
 	if (level == SND_SOC_BIAS_STANDBY)
 		ret = manta_stop_fll1(rtd);
-
-	dapm->bias_level = level;
 
 	return ret;
 }
@@ -215,6 +213,7 @@ static int manta_late_probe(struct snd_soc_card *card)
 	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	struct snd_soc_dai *codec = snd_soc_rtd_to_codec(rtd, 0);
 	struct manta_priv *priv = snd_soc_card_get_drvdata(card);
+	struct snd_soc_dapm_context *dapm = snd_soc_card_to_dapm(card);
 	unsigned long mclk2_rate;
 	int ret;
 
@@ -236,7 +235,7 @@ static int manta_late_probe(struct snd_soc_card *card)
 	}
 
 	/* Force AIF1CLK on as it will be master for jack detection */
-	ret = snd_soc_dapm_force_enable_pin(&card->dapm, "AIF1CLK");
+	ret = snd_soc_dapm_force_enable_pin(dapm, "AIF1CLK");
 	if (ret < 0) {
 		dev_err(codec->dev, "Failed to enable AIF1CLK (%d)\n", ret);
 		return ret;
