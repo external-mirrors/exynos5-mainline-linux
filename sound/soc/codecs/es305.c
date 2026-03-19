@@ -357,7 +357,7 @@ static SOC_ENUM_SINGLE_EXT_DECL(es305_passthrough_enum, es305_passthrough_texts)
 static int es305_passthrough_control_get(struct snd_kcontrol *kcontrol,
 				  struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_dapm_context *dapm = snd_soc_dapm_kcontrol_dapm(kcontrol);
+	struct snd_soc_dapm_context *dapm = snd_soc_dapm_kcontrol_to_dapm(kcontrol);
 	struct snd_soc_component *c = snd_soc_dapm_to_component(dapm);
 	struct es305_data *es305 = snd_soc_component_get_drvdata(c);
 
@@ -369,7 +369,7 @@ static int es305_passthrough_control_get(struct snd_kcontrol *kcontrol,
 static int es305_passthrough_control_put(struct snd_kcontrol *kcontrol,
 				  struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_dapm_context *dapm = snd_soc_dapm_kcontrol_dapm(kcontrol);
+	struct snd_soc_dapm_context *dapm = snd_soc_dapm_kcontrol_to_dapm(kcontrol);
 	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
 	struct snd_soc_component *c = snd_soc_dapm_to_component(dapm);
 	struct es305_data *es305 = snd_soc_component_get_drvdata(c);
