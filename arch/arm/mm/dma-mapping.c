@@ -1392,11 +1392,11 @@ fail:
 }
 
 /**
- * arm_iommu_unmap_page
+ * arm_iommu_unmap_phys
  * @dev: valid struct device pointer
  * @handle: DMA address of buffer
- * @size: size of buffer (same as passed to dma_map_page)
- * @dir: DMA transfer direction (same as passed to dma_map_page)
+ * @size: size of buffer (same as passed to dma_map_phys)
+ * @dir: DMA transfer direction (same as passed to dma_map_phys)
  * @attrs: DMA mapping attributes
  *
  * IOMMU aware version of arm_dma_unmap_phys()
