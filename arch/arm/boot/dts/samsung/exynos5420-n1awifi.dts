@@ -157,6 +157,16 @@
 	gpio = <&gpd1 6 GPIO_ACTIVE_HIGH>;
 };
 
+&max77888 {
+	motor-driver {
+		compatible = "maxim,max77693-haptic";
+		haptic-supply = <&ldo26_reg>;
+		pwms = <&pwm 1 38240 0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pwm1_out>;
+	};
+};
+
 &wifi {
 	compatible = "brcm,bcm4339-fmac", "brcm,bcm4329-fmac";
 };

@@ -15,6 +15,7 @@
 #include <dt-bindings/regulator/maxim,max77802.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
+#include <dt-bindings/leds/common.h>
 
 / {
 	chassis-type = "tablet";
@@ -84,6 +85,11 @@
 		};
 	};
 
+	battery: battery {
+		compatible = "simple-battery";
+		constant-charge-current-max-microamp = <2000000>;
+	};
+
 	panel: panel {
 		compatible = "samsung,lsl101dl01";
 
@@ -122,6 +128,9 @@
 			pinctrl-names = "default";
 			interrupt-parent = <&gpx1>;
 			interrupts = <5 IRQ_TYPE_EDGE_BOTH>;
+
+			power-supplies = <&charger>;
+
 			maxim,rsns-microohm = <10000>;
 			maxim,over-heat-temp = <600>;
 			maxim,over-volt = <4300>;
@@ -1595,6 +1604,78 @@
 	};
 };
 
+&hsi2c_9 {
+	status = "okay";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	max77888: pmic@66 {
+		compatible = "maxim,max77888";
+		reg = <0x66>;
+		interrupt-parent = <&gpx1>;
+		interrupts = <4 IRQ_TYPE_LEVEL_LOW>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&max77888_irq>;
+
+		muic {
+			compatible = "maxim,max77693-muic";
+
+			maxim,av-cable-as-otg;
+			maxim,safeout-for-usb;
+
+			usb_connector: connector {
+				compatible = "samsung,usb-connector-11pin",
+						 "usb-b-connector";
+				label = "micro-USB";
+				type = "micro";
+
+				ports {
+					#address-cells = <1>;
+					#size-cells = <0>;
+
+					port@0 {
+						reg = <0>;
+
+						muic_to_usb: endpoint {
+							remote-endpoint = <&usb_to_muic>;
+						};
+					};
+				};
+			};
+		};
+
+		charger: charger {
+			compatible = "maxim,max77888-charger";
+			monitored-battery = <&battery>;
+			maxim,usb-connector = <&usb_connector>;
+
+			maxim,constant-microvolt = <4275000>;
+			maxim,min-system-microvolt = <3600000>;
+			maxim,thermal-regulation-celsius = <70>;
+			maxim,battery-overcurrent-microamp = <3500000>;
+			maxim,charge-input-threshold-microvolt = <4300000>;
+		};
+
+		led {
+			compatible = "maxim,max77693-led";
+			maxim,boost-mode = <LEDS_BOOST_ADAPTIVE>;
+			maxim,boost-mvout = <3300>;
+			maxim,mvsys-min = <2400>;
+
+			flash-led {
+				label = "max77693-flash";
+				function = LED_FUNCTION_FLASH;
+				color = <LED_COLOR_ID_WHITE>;
+				led-sources = <0>;
+				led-max-microamp = <109375>;
+				flash-max-microamp = <625000>;
+				flash-max-timeout-us = <187500>;
+			};
+		};
+	};
+};
+
 /* Internal storage */
 &mmc_0 {
 	status = "okay";
@@ -1721,6 +1802,11 @@
 		samsung,pins = "gpx1-3";
 		samsung,pin-function = <EXYNOS_PIN_FUNC_INPUT>;
 		samsung,pin-pud = <EXYNOS_PIN_PULL_DOWN>;
+	};
+
+	max77888_irq: max77888-irq-pins {
+		samsung,pins = "gpx1-4";
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
 	};
 
 	fuel_alert_irq: fuel-alert-irq-pins {
@@ -1870,13 +1956,15 @@
 };
 
 &usbdrd_dwc3_0 {
-	dr_mode = "peripheral";
+	dr_mode = "otg";
+	usb-role-switch;
 	snps,usb2-gadget-lpm-disable;
-};
 
-&usbdrd_dwc3_1 {
-	dr_mode = "peripheral";
-	snps,usb2-gadget-lpm-disable;
+	port {
+		usb_to_muic: endpoint {
+			remote-endpoint = <&muic_to_usb>;
+		};
+	};
 };
 
 &usbdrd3_0 {
@@ -1885,6 +1973,21 @@
 };
 
 &usbdrd3_1 {
-	vdd33-supply = <&ldo12_reg>;
-	vdd10-supply = <&ldo15_reg>;
+	status = "disabled";
+};
+
+&usbdrd_phy1 {
+	status = "disabled";
+};
+
+&usbhost1 {
+	status = "disabled";
+};
+
+&usbhost2 {
+	status = "disabled";
+};
+
+&usb2_phy {
+	status = "disabled";
 };
