@@ -48,6 +48,26 @@ static const struct mfd_cell max77693_devs[] = {
 	},
 };
 
+static const struct mfd_cell max77888_devs[] = {
+	{ .name = "max77693-pmic", },
+	{
+		.name = "max77888-charger",
+		.of_compatible = "maxim,max77888-charger",
+	},
+	{
+		.name = "max77693-muic",
+		.of_compatible = "maxim,max77693-muic",
+	},
+	{
+		.name = "max77693-haptic",
+		.of_compatible = "maxim,max77693-haptic",
+	},
+	{
+		.name = "max77693-led",
+		.of_compatible = "maxim,max77693-led",
+	},
+};
+
 static const struct regmap_config max77693_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
@@ -161,7 +181,8 @@ static int max77693_i2c_probe(struct i2c_client *i2c)
 	max77693->dev = &i2c->dev;
 	max77693->i2c = i2c;
 	max77693->irq = i2c->irq;
-	max77693->type = id->driver_data;
+	/* Hard-code the type here for now, else haptic also needs to be adopted for TYPE_MAX77888 */
+	max77693->type = TYPE_MAX77693;
 
 	max77693->regmap = devm_regmap_init_i2c(i2c, &max77693_regmap_config);
 	if (IS_ERR(max77693->regmap)) {
@@ -266,8 +287,12 @@ static int max77693_i2c_probe(struct i2c_client *i2c)
 
 	pm_runtime_set_active(max77693->dev);
 
-	ret = mfd_add_devices(max77693->dev, -1, max77693_devs,
-			      ARRAY_SIZE(max77693_devs), NULL, 0, NULL);
+	if (id->driver_data == TYPE_MAX77888)
+		ret = mfd_add_devices(max77693->dev, -1, max77888_devs,
+				      ARRAY_SIZE(max77888_devs), NULL, 0, NULL);
+	else
+		ret = mfd_add_devices(max77693->dev, -1, max77693_devs,
+				      ARRAY_SIZE(max77693_devs), NULL, 0, NULL);
 	if (ret < 0)
 		goto err_mfd;
 
@@ -307,6 +332,7 @@ static void max77693_i2c_remove(struct i2c_client *i2c)
 
 static const struct i2c_device_id max77693_i2c_id[] = {
 	{ "max77693", TYPE_MAX77693 },
+	{ "max77888", TYPE_MAX77888 },
 	{ }
 };
 MODULE_DEVICE_TABLE(i2c, max77693_i2c_id);
@@ -345,6 +371,7 @@ static const struct dev_pm_ops max77693_pm = {
 #ifdef CONFIG_OF
 static const struct of_device_id max77693_dt_match[] = {
 	{ .compatible = "maxim,max77693" },
+	{ .compatible = "maxim,max77888" },
 	{},
 };
 MODULE_DEVICE_TABLE(of, max77693_dt_match);
