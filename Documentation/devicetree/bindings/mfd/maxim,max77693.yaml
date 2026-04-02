@@ -20,7 +20,9 @@ description: |
 
 properties:
   compatible:
-    const: maxim,max77693
+    enum:
+      - maxim,max77693
+      - maxim,max77888
 
   interrupts:
     maxItems: 1
