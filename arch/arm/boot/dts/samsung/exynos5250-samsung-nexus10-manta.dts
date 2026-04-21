@@ -94,6 +94,11 @@
 			compatible = "samsung,clock-xxti";
 			clock-frequency = <24000000>;
 		};
+
+		xusbxti {
+			compatible = "samsung,clock-xusbxti";
+			clock-frequency = <24000000>;
+		};
 	};
 
 	gpio-keys {
