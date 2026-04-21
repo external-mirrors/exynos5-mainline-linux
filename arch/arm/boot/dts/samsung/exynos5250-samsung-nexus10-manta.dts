@@ -157,18 +157,6 @@
 		};
 	};
 
-	flash-controller {
-		compatible = "gpio-leds";
-
-		led-flash {
-			function = LED_FUNCTION_FLASH;
-			color = <LED_COLOR_ID_WHITE>;
-			linux,default-trigger = "flash";
-			gpios = <&gpe0 1 GPIO_ACTIVE_HIGH>;
-			default-state = "off";
-		};
-	};
-
 	sound {
 		compatible = "samsung,nexus10-manta-audio";
 
