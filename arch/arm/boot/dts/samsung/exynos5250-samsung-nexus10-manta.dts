@@ -280,7 +280,7 @@
 		   regulator-min-microvolt = <3700000>;
 		   regulator-max-microvolt = <3700000>;
 		   regulator-always-on;
-	};
+	   };
 };
 
 &clock {
@@ -492,21 +492,6 @@
 		reset-gpios = <&gpg1 3 GPIO_ACTIVE_LOW>;
 		vdda-supply = <&ldo23_reg>;
 		vdd-supply = <&ldo9_reg>;
-	};
-};
-
-&i2c_4
-{
-	status = "okay";
-
-	haptic@48 {
-		compatible = "imagis,isa1200";
-		reg = <0x48>;
-		pinctrl-0 = <&vibrator_enable &pwm1_out>;
-		pinctrl-names = "default";
-		len-gpios = <&gpd1 6 GPIO_ACTIVE_HIGH>;
-		pwms = <&pwm 1 38675 0>;
-		imagis,ldo-voltage-millivolt = /bits/ 16 <3000>;
 	};
 };
 
@@ -811,12 +796,6 @@
 		samsung,pin-con-pdn = <EXYNOS_PIN_PDN_INPUT>;
 		samsung,pin-pud-pdn = <EXYNOS_PIN_PULL_UP>;
 		samsung,pin-val = <0>;
-	};
-	vibrator_enable: vibrator-enable-pins {
-		samsung,pins = "gpd1-6";
-		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
-		samsung,pin-pud = <EXYNOS_PIN_PULL_DOWN>;
-		samsung,pin-drv = <EXYNOS4_PIN_DRV_LV1>;
 	};
 	gpio_keys: gpio-keys-pins-pins {
 		samsung,pins = "gpx2-0", "gpx2-1", "gpx2-7", "gpx1-3";
