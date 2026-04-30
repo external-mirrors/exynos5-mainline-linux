@@ -425,7 +425,7 @@
 			magnetometer@c {
 				compatible = "asahi-kasei,ak8963";
 				reg = <0x0c>;
-
+				reset-gpios = <&gpg2 0 GPIO_ACTIVE_LOW>;
 				pinctrl-0 = <&msense_reset>;
 				pinctrl-names = "default";
 
