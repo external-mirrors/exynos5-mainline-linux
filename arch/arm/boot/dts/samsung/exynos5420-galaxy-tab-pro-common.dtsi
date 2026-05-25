@@ -546,10 +546,8 @@
 			opp-hz = /bits/ 64 <200000000>;
 			opp-microvolt = <875000>;
 		};
-		opp-160000000 {
-			opp-hz = /bits/ 64 <160000000>;
-			opp-microvolt = <875000>;
-		};
+
+		/* 160 MHz does not work: device freezes when switching to it */
 	};
 
 	samsung_K3QF2F20DB: lpddr3 {
@@ -697,30 +695,6 @@
 			tCKE		= <10000>;
 			tCKESR		= <10000>;
 			tMRD		= <25000>;
-		};
-
-		timings-5 {
-			compatible	= "jedec,lpddr3-timings";
-			max-freq	= <160000000>;
-			min-freq	= <160000000>;
-			tRFC		= <106250>;
-			tRRD		= <12500>;
-			tRPab		= <12500>;
-			tRPpb		= <12500>;
-			tRCD		= <18750>;
-			tRC			= <37500>;
-			tRAS		= <31250>;
-			tWTR		= <12500>;
-			tWR			= <37500>;
-			tRTP		= <12500>;
-			tW2W-C2C	= <0>;
-			tR2R-C2C	= <0>;
-			tFAW		= <25000>;
-			tXSR		= <70000>;
-			tXP			= <12500>;
-			tCKE		= <12500>;
-			tCKESR		= <12500>;
-			tMRD		= <31250>;
 		};
 	};
 
