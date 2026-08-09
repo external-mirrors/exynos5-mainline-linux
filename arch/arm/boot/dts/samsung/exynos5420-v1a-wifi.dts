@@ -100,9 +100,16 @@
 	vdd-supply = <&ldo34_reg>;
 };
 
-&cover_switch {
-	pinctrl-names = "default";
-	pinctrl-0 = <&cover_switch_gpio>;
+&gpio_keys {
+	pinctrl-0 = <&cover_switch_gpio &stylus_insert>;
+
+	pen-switch {
+		debounce-interval = <10>;
+		gpios = <&gpx0 0 GPIO_ACTIVE_LOW>;
+		label = "Pen Switch";
+		linux,input-type = <EV_SW>;
+		linux,code = <SW_PEN_INSERTED>;
+	};
 };
 
 &gyroscope {
@@ -116,18 +123,16 @@
 	#size-cells = <0>;
 
 	digitizer@56 {
-		compatible = "wacom,w9007a_v1";
+		compatible = "wacom,w9007a-v1";
 		reg = <0x56>;
 		pinctrl-names = "default";
-		pinctrl-0 = <&stylus_pdct &stylus_fwe &stylus_insert &stylus_irq>;
+		pinctrl-0 = <&stylus_fwe &stylus_irq>;
 		interrupt-parent = <&gpx3>;
 		interrupts = <5 IRQ_TYPE_EDGE_RISING>;
 
 		vdd-supply = <&stylus_reg>;
 
-		pdct-gpios = <&gpd1 2 GPIO_ACTIVE_LOW>;
 		flash-mode-gpios = <&gpd1 3 GPIO_ACTIVE_HIGH>;
-		pen-inserted-gpios = <&gpx0 0 GPIO_ACTIVE_LOW>;
 
 		touchscreen-x-mm = <262>;
 		touchscreen-y-mm = <164>;
@@ -199,12 +204,6 @@
 		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
 	};
 
-	cover_switch_gpio: cover-switch-gpio-pins {
-		samsung,pins = "gpx0-1";
-		samsung,pin-function = <EXYNOS_PIN_FUNC_F>;
-		samsung,pin-pud = <EXYNOS_PIN_PULL_UP>;
-	};
-
 	touch_en: toch-en-pins {
 		samsung,pins = "gpx0-6";
 		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
@@ -227,12 +226,6 @@
 };
 
 &pinctrl_1 {
-	stylus_pdct: stylus-pdct-pins {
-		samsung,pins = "gpd1-2";
-		samsung,pin-function = <EXYNOS_PIN_FUNC_F>;
-		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
-	};
-
 	stylus_fwe: stylus-fwe-pins {
 		samsung,pins = "gpd1-3";
 		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;

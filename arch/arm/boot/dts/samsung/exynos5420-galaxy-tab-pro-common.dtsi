@@ -42,8 +42,11 @@
 		};
 	};
 
-	gpio-keys {
+	gpio_keys: gpio-keys {
 		compatible = "gpio-keys";
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&cover_switch_gpio>;
 
 		key-power {
 			debounce-interval = <10>;
@@ -1771,6 +1774,12 @@
 		samsung,pin-function = <EXYNOS_PIN_FUNC_OUTPUT>;
 		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
 		samsung,pin-drv = <EXYNOS5420_PIN_DRV_LV1>;
+	};
+
+	cover_switch_gpio: cover-switch-gpio-pins {
+		samsung,pins = "gpx0-1";
+		samsung,pin-function = <EXYNOS_PIN_FUNC_F>;
+		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
 	};
 
 	accelerometer_irq1: accelerometer-irq1-pins {
